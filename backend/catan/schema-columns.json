@@ -1,0 +1,250 @@
+[
+  {
+    "column_default": null,
+    "column_name": "principal",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "table_name": "catan_lobby_receipts",
+    "udt_name": "uuid"
+  },
+  {
+    "column_default": null,
+    "column_name": "command_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "table_name": "catan_lobby_receipts",
+    "udt_name": "uuid"
+  },
+  {
+    "column_default": null,
+    "column_name": "op",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "table_name": "catan_lobby_receipts",
+    "udt_name": "text"
+  },
+  {
+    "column_default": null,
+    "column_name": "room_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "table_name": "catan_lobby_receipts",
+    "udt_name": "uuid"
+  },
+  {
+    "column_default": null,
+    "column_name": "payload_hash",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "table_name": "catan_lobby_receipts",
+    "udt_name": "text"
+  },
+  {
+    "column_default": null,
+    "column_name": "revision",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "table_name": "catan_lobby_receipts",
+    "udt_name": "int4"
+  },
+  {
+    "column_default": "now()",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "table_name": "catan_lobby_receipts",
+    "udt_name": "timestamptz"
+  },
+  {
+    "column_default": null,
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "table_name": "catan_rate_events",
+    "udt_name": "int8"
+  },
+  {
+    "column_default": null,
+    "column_name": "principal",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "table_name": "catan_rate_events",
+    "udt_name": "uuid"
+  },
+  {
+    "column_default": null,
+    "column_name": "kind",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "table_name": "catan_rate_events",
+    "udt_name": "text"
+  },
+  {
+    "column_default": "now()",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "table_name": "catan_rate_events",
+    "udt_name": "timestamptz"
+  },
+  {
+    "column_default": null,
+    "column_name": "room_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "table_name": "catan_receipts",
+    "udt_name": "uuid"
+  },
+  {
+    "column_default": null,
+    "column_name": "seat",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "table_name": "catan_receipts",
+    "udt_name": "text"
+  },
+  {
+    "column_default": null,
+    "column_name": "command_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "table_name": "catan_receipts",
+    "udt_name": "uuid"
+  },
+  {
+    "column_default": null,
+    "column_name": "payload_hash",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "table_name": "catan_receipts",
+    "udt_name": "text"
+  },
+  {
+    "column_default": null,
+    "column_name": "revision",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "table_name": "catan_receipts",
+    "udt_name": "int4"
+  },
+  {
+    "column_default": null,
+    "column_name": "accepted",
+    "data_type": "boolean",
+    "is_nullable": "NO",
+    "table_name": "catan_receipts",
+    "udt_name": "bool"
+  },
+  {
+    "column_default": null,
+    "column_name": "result",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "table_name": "catan_receipts",
+    "udt_name": "jsonb"
+  },
+  {
+    "column_default": "now()",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "table_name": "catan_receipts",
+    "udt_name": "timestamptz"
+  },
+  {
+    "column_default": "gen_random_uuid()",
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "table_name": "catan_rooms",
+    "udt_name": "uuid"
+  },
+  {
+    "column_default": null,
+    "column_name": "host_user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "table_name": "catan_rooms",
+    "udt_name": "uuid"
+  },
+  {
+    "column_default": null,
+    "column_name": "guest_user_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "table_name": "catan_rooms",
+    "udt_name": "uuid"
+  },
+  {
+    "column_default": "'Player 1'::text",
+    "column_name": "host_name",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "table_name": "catan_rooms",
+    "udt_name": "text"
+  },
+  {
+    "column_default": "'Player 2'::text",
+    "column_name": "guest_name",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "table_name": "catan_rooms",
+    "udt_name": "text"
+  },
+  {
+    "column_default": "'standard'::text",
+    "column_name": "bot_level",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "table_name": "catan_rooms",
+    "udt_name": "text"
+  },
+  {
+    "column_default": "'waiting'::text",
+    "column_name": "status",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "table_name": "catan_rooms",
+    "udt_name": "text"
+  },
+  {
+    "column_default": "0",
+    "column_name": "revision",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "table_name": "catan_rooms",
+    "udt_name": "int4"
+  },
+  {
+    "column_default": null,
+    "column_name": "snapshot",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "table_name": "catan_rooms",
+    "udt_name": "jsonb"
+  },
+  {
+    "column_default": "now()",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "table_name": "catan_rooms",
+    "udt_name": "timestamptz"
+  },
+  {
+    "column_default": "now()",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "table_name": "catan_rooms",
+    "udt_name": "timestamptz"
+  },
+  {
+    "column_default": "now()",
+    "column_name": "last_touched_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "table_name": "catan_rooms",
+    "udt_name": "timestamptz"
+  }
+]

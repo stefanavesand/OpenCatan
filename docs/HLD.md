@@ -315,3 +315,7 @@ PWA 1.2.1 implements a first pure client policy for connection/command outcomes,
 ### Bot requirements baseline
 
 [Bot requirements](BOT_REQUIREMENTS.md) introduce planned BOT-01–18 and B1/B2/B3 gates. A future bot policy consumes only an authorized immutable player observation and legal choices; the trusted session authority schedules it and submits ordinary commands. Local setup runs offline on the local authority; internet bots run with the managed authority. Durable intent recovery, bounded computation, cancellation and policy/version compatibility must be designed before implementation. Source choice and execution details remain open; no bot runtime is implemented by this document change.
+
+### Implementation note: full Catan internet pilot
+
+[CATAN_FULL_GAME.md](CATAN_FULL_GAME.md) records the next implementation slice: the same bundled TypeScript session/decision engine runs in the PWA test harness and managed authority; server-only snapshots/receipts, authorized choices and two-human/one-bot rooms replace duplicated online rules for this Catan flow. The managed adapter currently uses a TanStack HTTP route with Supabase rather than a Supabase Edge Function. Review artifacts and their deployment limitations are in [backend/catan](../backend/catan/README.md). This establishes an executed ADR-01 direction; it does not close E1/E2, identity recovery, operational or device gates. The separate legacy tic-tac-toe backend remains unchanged.

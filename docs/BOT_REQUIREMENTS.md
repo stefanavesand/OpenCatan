@@ -1,13 +1,13 @@
 # Catan bot requirements
 
-Version 1.0 · 2026-11-01 · Proposed acceptance baseline, not implemented behavior.
+Version 1.1 · 2026-11-01 · Acceptance baseline; see [implementation evidence](CATAN_FULL_GAME.md).
 Product requirements supplement to [PRD 3.2](../PRD.md); architecture context: [HLD](HLD.md).
 
 ## 1. Purpose and scope
 
 Bots serve two needs: fill otherwise empty seats so two friends can play a three-player Catan game, and exercise game rules/recovery through repeatable automated play. They are game participants, not a second rule engine or a privileged debugging interface.
 
-Use an existing open-source policy where practical. Selection/adaptation follows these requirements; no library is selected or copied by this specification. Start with ordinary deterministic heuristics or seeded selection among legal actions. Learned policies/search can be added later behind the same boundary. No LLM/API subscription, model training, competitive playing-strength claim or new self-managed server is required for the first bot.
+Use an existing open-source policy where practical. Selection/adaptation follows these requirements; the implementation record below identifies the selected adaptation. Start with ordinary deterministic heuristics or seeded selection among legal actions. Learned policies/search can be added later behind the same boundary. No LLM/API subscription, model training, competitive playing-strength claim or new self-managed server is required for the first bot.
 
 | Stage | Required deliverable | Dependencies / limits |
 |---|---|---|
@@ -15,7 +15,7 @@ Use an existing open-source policy where practical. Selection/adaptation follows
 | B2 — base-game bots and simulation | Bots complete every decision phase supported by the scoped base game; a headless runner produces reproducible games and failure artifacts. | Requires complete shared base rules, legal-decision discovery, durable session state and private views. Add coverage alongside each phase rather than waiting for a large rewrite. |
 | B3 — internet mixed games | Two people on separate devices invite each other and play against one bot; support three/four total seats. | Requires Catan rooms, managed authority, identity binding, recovery and privacy controls. Bots do not solve networking by themselves. |
 
-Human play supports one or more humans with enough bots to make three or four seats; the required mixed case is two humans plus one bot. All-bot games are mandatory for automated tests, not a requirement to expose an unattended simulator in the public app. Expansion rules, automatic takeover of disconnected humans, mid-game seat conversion and multiple advertised difficulty levels are out of scope initially.
+Human play supports one or more humans with enough bots to make three or four seats; the required mixed case is two humans plus one bot. All-bot games are mandatory for automated tests, not a requirement to expose an unattended simulator in the public app. Expansion rules, automatic takeover of disconnected humans, mid-game seat conversion and expansion-specific bots are out of scope initially. The first internet pilot supports exactly two humans and one bot; other seat configurations remain follow-up requirements.
 
 ## 2. User stories
 
@@ -50,7 +50,7 @@ All rows are mandatory for their first applicable stage unless marked later. Exi
 | BOT-15 / B1 | **Errors and observability.** Differentiate no legal action, invalid output, timeout, unavailable policy, stale revision and storage/transport failure. Never present an uncommitted bot move as completed. Bound diagnostics and avoid secret data/tokens; correlate seat, policy, command and revision. Rate limits/unknown network outcomes retain the original command rather than producing a new decision. |
 | BOT-16 / B1 | **Open-source provenance.** Before copying/adapting code, pin repository/commit, inspect actual license and transitive dependencies, preserve attribution/notices, record copied/adapted files and changes, and verify model-weight licenses separately if used. Translate maintained comments/UI to English while preserving required notices. No assets/models/runtime dependencies are imported implicitly. GPL code may not simply be relabeled MIT. |
 | BOT-17 / B3 | **Managed scheduling and authorization.** Persist bot membership separately from human authentication. Only the session authority schedules an eligible bot seat. Multiple workers/retries/reconnects must not create duplicate effective actions. Enforce ordinary rate limits plus bounded bot work/session; cancel old tasks on session expiry/deletion and ignore late results from obsolete authority epochs. |
-| BOT-18 / B1 | **Limited initial strength claim.** Ship one clearly described basic opponent plus test policies. Require legal play, understandable setup preferences and completion, not “strong AI” or a guaranteed win rate. Later difficulty/strength changes require reproducible comparisons with rotated seats and held-out seeds, including rule/observation parity. |
+| BOT-18 / B1 | **Selectable level without strength guarantees.** Offer Easy and Standard before room creation, persist the selection and policy version, and show the selected level. Easy uses more noisy priorities; Standard uses the full bounded heuristic. Neither implies a measured competitive rating. Keep test policies separate from advertised opponents. Require legal play, understandable setup preferences and completion, not “strong AI” or a guaranteed win rate. Later difficulty/strength changes require reproducible comparisons with rotated seats and held-out seeds, including rule/observation parity. |
 
 ### Numerical targets and decision policy
 
@@ -84,7 +84,7 @@ A restart recovers a persisted intent before scheduling again. It must not take 
 
 ## 5. Acceptance test matrix
 
-Cases below are planned coverage. No bot behavior has been implemented or verified by writing this document.
+Cases below are the acceptance baseline, including device and failure tests still outstanding. See CATAN_FULL_GAME.md for actual execution evidence; implementation does not imply every gate is closed.
 
 | Case / gate | Requirements | Test and acceptance |
 |---|---|---|
@@ -103,16 +103,32 @@ Cases below are planned coverage. No bot behavior has been implemented or verifi
 
 B1 gate: BT-01–08, including their stated device/contract portions, recorded provenance and measured lightweight-policy budget. B1 does not require full-game mechanics or proof of private-hand isolation for gameplay not yet implemented. B2 additionally requires BT-06's full secrecy checks, BT-09/10, complete rule coverage and a reviewed completion-rate baseline. B3 adds BT-11/12 and the ordinary internet-session release gates. Bot simulations complement human E2E/device testing; they cannot certify UI clarity or complete rule correctness alone.
 
-## 6. Reuse candidates and decisions still open
+## 6. Reuse review and selected adaptation
 
-Previously reviewed candidates, not implementation choices or verified performance claims:
+The original candidate review is preserved below. The implementation now adapts the pinned MIT settlement heuristic; the other projects remain references, with no imported runtime or code. This does not establish competitive playing strength:
 
 | Candidate | Previously inspected evidence | Decision impact |
 |---|---|---|
-| [8910work-cell/catan-ai](https://github.com/8910work-cell/catan-ai) | Actual [MIT license](https://github.com/8910work-cell/catan-ai/blob/main/LICENSE), README and part of `strong_ai.js`. Setup heuristics depend on that project's global state. | Candidate for extracting a bounded placement policy; needs observation/coordinate adaptation, isolation, tests and pinned attribution. No code imported yet. |
+| [8910work-cell/catan-ai](https://github.com/8910work-cell/catan-ai) | Actual [MIT license](https://github.com/8910work-cell/catan-ai/blob/main/LICENSE), README and part of `strong_ai.js`. Setup heuristics depend on that project's global state. | Candidate for extracting a bounded placement policy; needs observation/coordinate adaptation, isolation, tests and pinned attribution. Settlement-scoring heuristic adapted at commit `3e75df8c48e44a3f474a0bb366f654844cec3d37`; see THIRD_PARTY_NOTICES.md and CATAN_FULL_GAME.md. |
 | [Catanatron](https://github.com/bcollazo/catanatron) | README, actual [GPL-3.0 license](https://github.com/bcollazo/catanatron/blob/main/LICENSE), player-module listing. Python simulator/bot framework. | Candidate for offline simulation/reference evaluation; integrating its runtime is not the first PWA bot requirement. Verify rule/observation parity and licensing before reuse. |
 | [JSettlers2](https://github.com/jdmonin/JSettlers2) | README, [GPLv3 license](https://github.com/jdmonin/JSettlers2/blob/main/COPYING-GPLv3.txt), robot source header (GPLv3-or-later). Java client/server with bots. | Reference candidate; direct integration/port has runtime and license implications. |
 
-No candidate was executed in our environment during the preceding review. Do not infer maturity, hidden-information safety, full rule parity or playing strength from README claims. Before adoption, inspect the exact selected files and dependencies and run a small adapter experiment through our authority.
+No candidate was executed during the preceding review. The subsequent adapted-policy execution evidence is in CATAN_FULL_GAME.md. Do not infer maturity, hidden-information safety, full rule parity or playing strength from README claims. Before adoption, inspect the exact selected files and dependencies and run a small adapter experiment through our authority.
 
-Open decisions: source/policy choice and pinned version; canonical observation/legal-choice schema; exact work/fallback budget; bot save-format migration; scheduler execution boundary; B2 regression completion threshold; B3 compute/cost quotas. Record technical choices in a focused HLD/ADR after this requirements baseline. Do not add a second authoritative rule implementation to accommodate a bot.
+Current choices: a pinned MIT settlement heuristic plus original bounded action policy, projected legal choices and a managed authority scheduler for the two-human/one-bot internet pilot. Local B1 scheduling is postponed to prioritize the requested complete internet game. Open decisions: local bot save migration/execution, measured resource and strength budgets, operational cost quotas and closure of device/failure gates. Record technical choices in a focused HLD/ADR after this requirements baseline. Do not add a second authoritative rule implementation to accommodate a bot.
+
+## 7. Level, latency and resource budgets
+
+These are explicit targets, not all verified capabilities. Selection is made before play and persists for the entire game. The initial policy is stateless between decisions; no learned weights or Wasm runtime is required. Policy randomness is derived from room/revision/actor/policy version independently of secret game randomness.
+
+| Area | Initial requirement | Current evidence |
+|---|---|---|
+| Levels | Easy and Standard selectable, persisted and visibly labeled. No competitive strength claim until held-out paired evaluation. | Both policies complete seeded simulations. Relative playing strength has not been evaluated. |
+| Decision latency | p95 under 250 ms and no continuous main-thread task over 50 ms on the reference device/runtime; no synchronous unbounded search. | Node harness measurements are recorded separately; iPad measurement remains open. Managed bots do not execute on the iPad. |
+| End-to-end latency | Record authority response separately from policy CPU. Target p95 under 2 s for a normal move and bot response on an agreed normal connection; explicit synchronizing/backoff state for slower responses. | Real internet measurement remains distinct from local policy timing. Polling may add up to 5 s for an idle peer. |
+| CPU/work | At most 256 legal choices and 128K JSON code units per observation per evaluation; bounded board scans, no tree search. At most 24 bot steps per backend invocation; revision fencing prevents duplicate effective moves. | Enforced input/work caps in policy/backend; runtime CPU termination and aggregate service costs still require operational measurement. |
+| Memory | Target under 8 MiB incremental transient memory per decision, zero retained policy history and no model downloads. Shared runtime included in verified offline package. | Whole-process Node heap is not incremental per-bot memory; no per-decision heap/device claim yet. |
+| Pacing | Cosmetic delay must not change choice or randomness. Never depend on iOS background execution. | Server commits promptly; clients synchronize in foreground. No artificial delay. |
+| Failure | Pause on unknown/incompatible policy rather than silently changing strategy. Preserve pending command ID on unknown network outcome. Surface stalled bot decisions, with no retry storm. | Backend stops a failed drain; richer visible bot-failure status remains follow-up. |
+
+The one-human/multiple-bot UI and offline local bot scheduler are not part of the first internet pilot. Existing local setup saves remain supported independently.

@@ -18,6 +18,12 @@ const engine = await viteBuild({ configFile: false, publicDir: false, logLevel: 
   build: { write: false, minify: false, lib: { entry: path.join(root, 'src/game/engine/setupSession.ts'), formats: ['es'], fileName: 'catan-engine' } } });
 const engineChunk = (Array.isArray(engine) ? engine : [engine]).flatMap(result => result.output).find(item => item.type === 'chunk');
 files.push('catan-engine.js'); contents.push(Buffer.from(engineChunk.code));
+const fullEngine = await viteBuild({ configFile: false, publicDir: false, logLevel: 'silent', resolve: { alias: { '@': path.join(root, 'src') } },
+  build: { write: false, minify: false, lib: { entry: path.join(root, 'src/game/session/index.ts'), formats: ['es'], fileName: 'catan-runtime' } } });
+const fullChunk = (Array.isArray(fullEngine) ? fullEngine : [fullEngine]).flatMap(result => result.output).find(item => item.type === 'chunk');
+const botLicense = await readFile(path.join(root, 'licenses/catan-ai-MIT.txt'), 'utf8');
+files.push('catan-runtime.js'); contents.push(Buffer.from(`/* Third-party settlement heuristic: 8910work-cell/catan-ai, MIT.\n${botLicense}\n*/\n${fullChunk.code}`));
+
 const template = await readFile(path.join(source, 'sw-template.js'), 'utf8');
 const hash = createHash('sha256').update(version).update(template).update(await readFile(fileURLToPath(import.meta.url)));
 files.forEach((name, i) => hash.update(name).update(contents[i]));
