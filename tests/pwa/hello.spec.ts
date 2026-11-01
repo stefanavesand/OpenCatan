@@ -3,7 +3,9 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 const address = 'http://127.0.0.1:4175/OpenCatan/hello/';
 const cssPath = 'pwa-dist/hello/style.css';
-function build(version = '1.0.0') {
+const initialVersion = JSON.parse(await readFile('pwa/version.json', 'utf8')).version as string;
+const nextVersion = (step: number) => initialVersion.replace(/\d+$/, patch => String(Number(patch) + step));
+function build(version = initialVersion) {
   execFileSync(process.execPath, ['scripts/build-pwa.mjs'], { env: { ...process.env, PWA_VERSION: version } });
 }
 
@@ -65,8 +67,8 @@ test('an incomplete update preserves v1; a verified update waits for the user an
     const page = await context.newPage();
     await page.goto(address);
     await expect(page.locator('#offline')).toHaveText('Klart för offline');
-    await expect(page.locator('.version')).toHaveText('v1.0.0');
-    build('1.0.1');
+    await expect(page.locator('.version')).toHaveText(`v${initialVersion}`);
+    build(nextVersion(1));
     await writeFile(cssPath, 'broken-update');
     await page.evaluate(async () => {
       const registration = await navigator.serviceWorker.getRegistration();
@@ -77,19 +79,19 @@ test('an incomplete update preserves v1; a verified update waits for the user an
     });
     await context.setOffline(true);
     await page.reload();
-    await expect(page.locator('.version')).toHaveText('v1.0.0');
+    await expect(page.locator('.version')).toHaveText(`v${initialVersion}`);
     await expect(page.locator('#offline')).toHaveText('Klart för offline');
     await context.setOffline(false);
-    build('1.0.2');
+    build(nextVersion(2));
     await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update(); });
     await expect(page.getByRole('button', { name: 'Installera uppdatering', exact: true })).toBeVisible();
-    await expect(page.locator('.version')).toHaveText('v1.0.0');
+    await expect(page.locator('.version')).toHaveText(`v${initialVersion}`);
     await page.getByRole('button', { name: 'Installera uppdatering', exact: true }).click();
-    await expect(page.locator('.version')).toHaveText('v1.0.2');
+    await expect(page.locator('.version')).toHaveText(`v${nextVersion(2)}`);
     await expect(page.locator('#offline')).toHaveText('Klart för offline');
     await context.setOffline(true);
     await page.reload();
-    await expect(page.locator('.version')).toHaveText('v1.0.2');
+    await expect(page.locator('.version')).toHaveText(`v${nextVersion(2)}`);
     await expect(page.locator('#offline')).toHaveText('Klart för offline');
   } finally { await context.close(); build(); }
 });

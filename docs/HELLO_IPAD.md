@@ -11,7 +11,7 @@ https://stefanavesand.github.io/OpenCatan/hello/
 1. Open the URL in Safari while connected to the internet.
 2. Wait for **Klart för offline**. This appears after the active service worker has checked the contents of all seven required app files against SHA-256 hashes.
 3. Tap **Share → Add to Home Screen → Add**. Leave **Open as Web App** enabled if that option appears.
-4. Launch **Hello iPad** from the new home-screen icon. **Startläge** should say **Installerad webbapp**.
+4. Launch **Hello iPad** from the new home-screen icon. **Startläge** should say **Installerad webbapp**. Wait for **Klart för offline** in the installed app as well; do not rely only on Safari’s cache.
 5. Turn on airplane mode and explicitly turn Wi-Fi off. Close the app completely from the app switcher, then open the home-screen icon again.
 6. **Hello world**, the version and **Klart för offline** should still appear. **Nätkontakt** should report no connection.
 
@@ -49,7 +49,7 @@ NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost PLAYWRIGHT_BROWSERS_PA
 
 The repository's Pages settings must use **Deploy from a branch**, branch **gh-pages**, folder **/(root)**. The source implementation lives on `codex/pwa-hello`; the publishing branch contains only static output and no build dependencies.
 
-For the next device update test, increment `pwa/version.json` to `1.0.1`, run the checks and publish. Reopen the installed app online; it should offer **Installera uppdatering**. After accepting, verify the version and repeat the offline cold-start check. Version 1.0.0 is the first device installation; version 1.0.1 has not been published as part of the initial setup.
+For the next device update test, increment `pwa/version.json` to `1.0.1`, run the checks and publish. Reopen the installed app online; it should offer **Installera uppdatering**. After accepting, verify the version and repeat the offline cold-start check. Version 1.0.0 was the first device installation. Version 1.0.1 is the first real-device update test.
 
 ## Update boundaries
 
@@ -57,4 +57,4 @@ Each build has a source-derived build ID and its own cache. Failed installs dele
 
 This is a small installation proof. Future games still need complete authoritative persistence, schema migration and a safe session boundary for updates before the same mechanism is used during ongoing matches.
 
-Verification: four PWA browser scenarios passed locally; all 29 existing rule/session unit tests still passed. The original game e2e suite was not rerun for this independent static app. The device-installation result remains to be supplied from the iPad.
+Verification: four PWA browser scenarios passed locally; all 29 existing rule/session unit tests still passed. The original game e2e suite was not rerun for this independent static app. The user has confirmed installation and offline cold startup of version 1.0.0 on a real iPad. The version 1.0.1 update and subsequent offline cold startup remain to be checked on that device.
