@@ -22,3 +22,5 @@ Local tracking for this implementation. The repository requests the `bd` CLI in 
 - SESSION-STATE-1 (client slice implemented): PWA 1.2.1 has pure connection/command state policy, stable transport failure codes, backoff/Retry-After and stops on blocked errors. See SESSION_STATES.md. Remaining: common runtime across games, backend payload-bound dedup/stable rejection receipts, durable/cross-tab cooldown, strict protocol/save validation and IndexedDB outbox. This does not close E1 or implement server rate limits.
 
 - LANGUAGE-1: English UI/repository policy is implemented in PWA 1.2.2. Preserve legacy storage keys, lock names and local route alias. See ENGLISH_RELEASE.md. Verify the installed English update on the actual iPad.
+
+- CATAN-PWA-1: Version 1.3.0 implements the user-selected local iPad setup preview with shared pure TypeScript placement rules, durable saves and original SVG visuals. See CATAN_SETUP.md. Verify actual iPad touch/offline recovery. Next phases, full snapshots, private projections and managed online authority remain open; this does not close E1/E2. Preserve ruleVersion-1 fixed-layout replay compatibility.

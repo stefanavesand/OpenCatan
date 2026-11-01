@@ -13,6 +13,8 @@ The current [PRD](PRD.md) defines staged scope, user stories, security requireme
 
 ## Installed PWA proof
 
+The first [Catan setup preview](docs/CATAN_SETUP.md) is available in Game Shelf 1.3.0: local 3–4 player starting placements with offline saves and original SVG graphics. This preview ends after setup; it is separate from the legacy full-game preview below.
+
 The independent [Game Shelf PWA](https://stefanavesand.github.io/OpenCatan/hello/) contains a small local three-in-a-row game with IndexedDB recovery. It is separate from the OpenCatan game below. See [local game and iPad testing](docs/LOCAL_GAME.md).
 
 ## Development status and end-to-end testing

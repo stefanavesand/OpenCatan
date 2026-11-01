@@ -1,5 +1,6 @@
 import { mountLibrary, prepareForUpdate } from './library.js';
 import { mountOnline, prepareOnlineUpdate } from './online.js';
+import { mountCatan, prepareCatanUpdate } from './catan.js';
 const BUILD_ID = '__BUILD_ID__';
 const offline = document.querySelector('#offline');
 const detail = document.querySelector('#detail');
@@ -72,10 +73,11 @@ update.addEventListener('click', async () => {
   update.disabled = true;
   await prepareForUpdate();
   await prepareOnlineUpdate();
+  await prepareCatanUpdate();
   reloadForUpdate = true;
   registration.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
 });
 navigator.serviceWorker?.addEventListener('controllerchange', () => { if (reloadForUpdate) window.location.reload(); });
 window.addEventListener('online', showNetwork); window.addEventListener('offline', showNetwork);
 window.matchMedia('(display-mode: standalone)').addEventListener('change', showDisplay);
-mountLibrary(); mountOnline(); showNetwork(); showDisplay(); start();
+mountLibrary(); mountOnline(); mountCatan(); showNetwork(); showDisplay(); start();

@@ -3,6 +3,7 @@ import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { deflateSync } from 'node:zlib';
+import { build as viteBuild } from 'vite';
 const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const source = path.join(root, 'pwa');
 const output = path.resolve(root, 'pwa-dist');
@@ -11,6 +12,12 @@ const version = process.env.PWA_VERSION || JSON.parse(await readFile(path.join(s
 if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Version must be x.y.z');
 const files = (await readdir(path.join(source, 'hello'))).sort();
 const contents = await Promise.all(files.map(name => readFile(path.join(source, 'hello', name))));
+// Bundle only the pure setup engine and geometry; never copy the legacy public assets.
+const engine = await viteBuild({ configFile: false, publicDir: false, logLevel: 'silent',
+  resolve: { alias: { '@': path.join(root, 'src') } },
+  build: { write: false, minify: false, lib: { entry: path.join(root, 'src/game/engine/setupSession.ts'), formats: ['es'], fileName: 'catan-engine' } } });
+const engineChunk = (Array.isArray(engine) ? engine : [engine]).flatMap(result => result.output).find(item => item.type === 'chunk');
+files.push('catan-engine.js'); contents.push(Buffer.from(engineChunk.code));
 const template = await readFile(path.join(source, 'sw-template.js'), 'utf8');
 const hash = createHash('sha256').update(version).update(template).update(await readFile(fileURLToPath(import.meta.url)));
 files.forEach((name, i) => hash.update(name).update(contents[i]));

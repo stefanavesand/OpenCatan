@@ -27,6 +27,7 @@
         <a class="button" id="play-game" href="#tic-tac-toe">Play tic-tac-toe</a>
         <a class="button secondary" href="#online">Play online</a></div>
       </article>
+      <article class="game-card catan-card"><div class="catan-preview" aria-hidden="true">⬡</div><div><p class="eyebrow">3–4 LOCAL PLAYERS · SETUP PREVIEW</p><h2>Catan</h2><p>Place your first settlements and roads on a shared iPad. Saved after every placement.</p><a class="button" href="#catan">Open Catan setup</a></div></article>
       <p class="coming">More board games are coming. Start with a quick game together.</p>
       <a class="quiet-link" href="#hello">Open the Hello world test →</a>
     </section>
@@ -50,6 +51,16 @@
         <button id="retry-save" class="text-button" type="button">Reload the latest save</button>
         <p>The game is saved on this device after every move. A backup provides extra protection if browser data is cleared.</p>
       </details>
+    </section>
+    <section data-view="catan" hidden>
+      <a class="quiet-link back" href="#library">← Back to the game shelf</a>
+      <div class="hero game-hero"><p class="eyebrow">LOCAL SETUP PREVIEW · ONE SHARED IPAD</p><h1>Catan<span>.</span></h1><p class="intro">Place two settlements and two roads per player. The second round runs in reverse order.</p></div>
+      <div class="catan-toolbar"><label for="catan-count">Players</label><select id="catan-count"><option value="3">3 players</option><option value="4" selected>4 players</option></select><button id="catan-start" type="button">Start setup</button><button id="catan-export" class="secondary" type="button" disabled>Save a backup</button><label class="button secondary" for="catan-import">Restore a backup</label><input id="catan-import" class="file-input" type="file" accept="application/json,.json"></div>
+      <div id="catan-reset" class="confirmation" hidden><p>Replace the saved Catan setup on this device?</p><button id="catan-reset-yes" type="button">Yes, start a new setup</button> <button id="catan-reset-no" class="secondary" type="button">Keep this setup</button></div>
+      <div class="game-surface catan-surface"><h2 id="catan-status" role="status" aria-live="polite">Loading saved setup…</h2><p id="catan-help">Start a setup or resume your saved placements.</p><div class="catan-scroll"><svg id="catan-board" viewBox="-280 -260 560 520" role="group" aria-label="Catan setup board"></svg></div><p id="catan-save" class="save-status" role="status"></p><p id="catan-error" class="save-error" role="alert"></p><button id="catan-reload" class="secondary" type="button">Reload saved setup</button></div>
+      <div id="catan-players" class="catan-players" aria-label="Players and starting resources"></div>
+      <p class="coming">This preview ends after setup. Dice, trading, development cards and online Catan are not available yet. Starting resources are awarded for the second settlement only. All setup information is public on this shared device.</p>
+      <div class="storage-panel"><p id="catan-persistence" role="status"></p><button id="catan-persist" class="secondary" type="button">Protect this save</button><p>Placements are saved on this device before they appear as completed. Keep a backup in case browser storage is cleared.</p></div>
     </section>
     <section data-view="online" hidden>
       <a class="quiet-link back" href="#library">← Back to the game shelf</a>

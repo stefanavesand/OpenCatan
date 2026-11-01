@@ -1,8 +1,11 @@
-import type { VertexCoord, EdgeCoord } from '@/types';
-import type { SessionView } from '@/session/protocol';
+import type { HexCoord, VertexCoord, EdgeCoord } from '@/types';
 import { getHexVertices, getHexEdges, getVertexEdges, getEdgeVertices, vertexKey, edgeKey } from '@/utils/hex';
 
-type SetupBoard = Pick<SessionView, 'board' | 'game'>;
+// Structural domain input: no Redux, UI, session or persistence dependency.
+export interface SetupBoard {
+  board: { tiles: { terrain: string; coord: HexCoord }[]; buildings: { vertex: VertexCoord }[]; roads: { edge: EdgeCoord }[] };
+  game: { setupState?: { lastPlacedSettlement: VertexCoord | null } };
+}
 const unique = <T>(values: T[], key: (value: T) => string) => [...new Map(values.map(v => [key(v), v])).values()];
 export function validSetupSettlements(state: SetupBoard): VertexCoord[] {
   const blocked = new Set<string>();
