@@ -33,3 +33,7 @@ drive-download-*/
 # Browser test artifacts
 playwright-report/
 test-results/
+
+# Standalone Hello iPad artifacts
+pwa-dist/
+playwright-pwa-report/

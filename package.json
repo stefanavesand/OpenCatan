@@ -16,7 +16,11 @@
     "party:deploy": "npx partykit deploy",
     "deploy": "npm run party:deploy && npm run build",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "pwa:build": "node scripts/build-pwa.mjs",
+    "pwa:dev": "npm run pwa:build && node scripts/serve-pwa.mjs",
+    "pwa:test": "playwright test --config playwright.pwa.config.ts",
+    "pwa:publish": "node scripts/publish-pwa.mjs"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.5.0",
