@@ -12,3 +12,5 @@ Local tracking for this implementation. The repository requests the `bd` CLI in 
 - RIGHTS-1: Obtain an actual code license notice and verifiable redistribution rights for all bundled images/sounds/fonts. README says MIT but no LICENSE file was found; PRD claims Colonist licensing without attached terms. Keep the test build local until rights are established for distribution.
 
 - GAMEPLAY-1: Extend the scenario-based progression tests to naturally generated complete games and four-player sessions. Expand road tie/branch and resource-shortage edge cases.
+
+- PWA-1: Verify Spelhyllan 1.1.0 game recovery on the actual iPad. Cache/update/IndexedDB recovery is automated in Chromium; device test remains pending. Future work includes standalone domain/session integration for OpenCatan, history, schema migrations and cross-device transport.

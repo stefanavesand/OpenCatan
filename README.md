@@ -7,6 +7,10 @@
 
 A free, open-source web implementation of Settlers of Catan with real-time multiplayer.
 
+## Installed PWA proof
+
+The independent [Spelhyllan PWA](https://stefanavesand.github.io/OpenCatan/hello/) contains a small local three-in-a-row game with IndexedDB recovery. It is separate from the OpenCatan game below. See [local game and iPad testing](docs/LOCAL_GAME.md).
+
 ## Development status and end-to-end testing
 
 Two real-browser tests now cover two-player setup and scenario-based gameplay through a ten-point victory. Typed rule tests cover the base-game economy, card deck, turn/robber actions and scoring. A naturally played complete game is not yet verified. See [the test guide](docs/SESSION_E2E.md) for automated and manual testing, scope and limitations, and [follow-up work](docs/FOLLOW_UPS.md).

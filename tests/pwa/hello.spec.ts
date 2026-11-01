@@ -15,7 +15,7 @@ test('verified resources survive offline reload and a full browser restart at th
   let context = await chromium.launchPersistentContext(profile, { headless: true, viewport: { width: 820, height: 1180 } });
   try {
     let page = context.pages()[0];
-    await page.goto(address);
+    await page.goto(`${address}#hello`);
     await expect(page.getByRole('heading', { name: 'Hello world.' })).toBeVisible();
     await expect(page.locator('#offline')).toHaveText('Klart för offline');
     const manifest = await (await page.request.get(new URL('manifest.webmanifest', address).href)).json();
@@ -36,7 +36,7 @@ test('verified resources survive offline reload and a full browser restart at th
     await context.close();
     context = await chromium.launchPersistentContext(profile, { headless: true, offline: true, viewport: { width: 820, height: 1180 } });
     page = context.pages()[0];
-    await page.goto(address);
+    await page.goto(`${address}#hello`);
     await expect(page.getByRole('heading', { name: 'Hello world.' })).toBeVisible();
     await expect(page.locator('#offline')).toHaveText('Klart för offline');
     await page.screenshot({ path: 'test-results/pwa-hello-offline.png', fullPage: true });
@@ -49,7 +49,7 @@ test('a corrupted first download never becomes ready for offline', async ({ brow
   const context = await browser.newContext();
   try {
     const page = await context.newPage();
-    await page.goto(address);
+    await page.goto(`${address}#hello`);
     await expect(page.locator('#offline')).toHaveText('Inte klart för offline', { timeout: 25000 });
     const state = await page.evaluate(async () => {
       const registration = await navigator.serviceWorker.getRegistration();
@@ -65,7 +65,7 @@ test('an incomplete update preserves v1; a verified update waits for the user an
   const context = await browser.newContext();
   try {
     const page = await context.newPage();
-    await page.goto(address);
+    await page.goto(`${address}#hello`);
     await expect(page.locator('#offline')).toHaveText('Klart för offline');
     await expect(page.locator('.version')).toHaveText(`v${initialVersion}`);
     build(nextVersion(1));
@@ -97,7 +97,7 @@ test('an incomplete update preserves v1; a verified update waits for the user an
 });
 
 test('removed cached files clear readiness and can be repaired while online', async ({ page }) => {
-  await page.goto(address);
+  await page.goto(`${address}#hello`);
   await expect(page.locator('#offline')).toHaveText('Klart för offline');
   await page.evaluate(async () => {
     const name = (await caches.keys()).find(k => k.startsWith('hello-pwa:'))!;

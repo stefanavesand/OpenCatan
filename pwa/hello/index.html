@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#1456db">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Hello iPad">
-  <meta name="description" content="Ett enkelt test av installation och offline på iPad.">
-  <title>Hello iPad</title>
+  <meta name="apple-mobile-web-app-title" content="Spelhyllan">
+  <meta name="description" content="Lokala spel för två, med sparning på din enhet.">
+  <title>Spelhyllan</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
@@ -17,8 +17,40 @@
 </head>
 <body>
   <main>
-    <header><span class="mark" aria-hidden="true">H</span><span>VÅR FÖRSTA PWA</span><span class="version">v__VERSION__</span></header>
-    <section class="hero">
+    <header><span class="mark" aria-hidden="true">H</span><a id="app-home" href="#library">SPELHYLLAN</a><span class="version">v__VERSION__</span></header>
+    <section data-view="library">
+      <div class="hero"><p class="eyebrow">Lite tid tillsammans.</p><h1>Din spelhylla<span>.</span></h1>
+      <p class="intro">Välj ett spel och slå er ner.<br>Det senaste partiet väntar kvar här.</p></div>
+      <article class="game-card">
+        <div class="mini-board" aria-hidden="true"><span>X</span><span>O</span><span></span><span></span><span>X</span><span></span><span>O</span><span></span><span>X</span></div>
+        <div><p class="eyebrow">FÖR TVÅ PÅ SAMMA ENHET</p><h2>Tre i rad</h2><p id="resume-note">Två spelare · samma iPad · utan nät</p>
+        <a class="button" id="play-game" href="#tre-i-rad">Spela tre i rad</a></div>
+      </article>
+      <p class="coming">Fler brädspel kommer. Här börjar vi med ett litet parti tillsammans.</p>
+      <a class="quiet-link" href="#hello">Öppna Hello world-testet →</a>
+    </section>
+    <section data-view="game" hidden>
+      <a class="quiet-link back" href="#library">← Till spelhyllan</a>
+      <div class="hero game-hero"><p class="eyebrow">TVÅ SPELARE · SAMMA IPAD</p><h1>Tre i rad<span>.</span></h1>
+      <p class="intro">Turas om att sätta X och O. Tre i rad vinner.</p></div>
+      <div class="game-surface">
+        <h2 id="game-status" role="status" aria-live="polite">Läser sparat parti…</h2>
+        <div id="board" class="tic-board" role="group" aria-label="Spelplan, tre gånger tre"></div>
+        <p id="save-status" class="save-status" role="status" aria-live="polite"></p>
+        <p id="save-error" class="save-error" role="alert"></p>
+        <button id="new-game" type="button">Nytt parti</button>
+        <div id="reset-confirm" class="confirmation" hidden><p>Starta om det pågående partiet?</p><button id="confirm-reset" type="button">Ja, starta nytt parti</button> <button id="cancel-reset" class="secondary" type="button">Behåll partiet</button></div>
+        <div id="import-confirm" class="confirmation" hidden><p>Ersätta partiet på denna enhet med kopian?</p><button id="confirm-import" type="button">Ja, läs in kopian</button> <button id="cancel-import" class="secondary" type="button">Behåll partiet</button></div>
+      </div>
+      <details class="storage-panel"><summary>Sparning och kopior</summary>
+        <p id="persistence" role="status">Kontrollerar lagringen…</p>
+        <div class="actions"><button id="persist" class="secondary" type="button">Skydda sparningen</button><button id="export-game" class="secondary" type="button">Spara en kopia</button>
+        <label class="button secondary" for="restore-game">Läs in en kopia</label><input id="restore-game" type="file" accept="application/json,.json" class="file-input"></div>
+        <button id="retry-save" class="text-button" type="button">Läs om senaste sparningen</button>
+        <p>Partiet sparas på denna enhet efter varje drag. En kopia ger extra skydd om webbläsardata rensas.</p>
+      </details>
+    </section>
+    <section class="hero" data-view="hello" hidden>
       <p class="eyebrow">Hej, iPad.</p>
       <h1>Hello world<span>.</span></h1>
       <p class="intro">En liten app som följer med dig.<br>Även när nätet inte gör det.</p>
@@ -33,16 +65,16 @@
       <button id="check" type="button">Kontrollera offlinepaket</button>
       <button id="update" type="button" hidden>Installera uppdatering</button>
     </div>
-    <aside>
+    <aside data-view="hello" hidden>
       <h2>Lägg appen på hemskärmen</h2>
       <ol>
         <li>Vänta tills det står <strong>Klart för offline</strong>.</li>
         <li>Öppna <strong>Dela</strong> i Safari och välj <strong>Lägg till på hemskärmen</strong>.</li>
-        <li>Starta appen via den nya ikonen. Testa sedan i flygplansläge med Wi-Fi avstängt.</li>
+        <li>Starta appen via den nya ikonen och vänta på <strong>Klart för offline</strong> även där. Testa sedan i flygplansläge med Wi-Fi avstängt.</li>
       </ol>
       <p>Om valet finns: låt <strong>Öppna som webbapp</strong> vara aktiverat.</p>
     </aside>
-    <footer>Hello iPad · Version __VERSION__ · <span id="build">__BUILD_ID__</span></footer>
+    <footer>Spelhyllan · Version __VERSION__ · <span id="build">__BUILD_ID__</span></footer>
   </main>
 </body>
 </html>
