@@ -26,7 +26,7 @@ npm run test:e2e:ui
 
 Open `playwright-report/index.html` for results. On failure, inspect the retained screenshot and trace in `test-results/`, using `npx playwright show-trace <trace.zip>`. Successful runs also save `test-results/setup-host.png` and `test-results/setup-peer.png`.
 
-## What the browser test exercises
+## What the setup browser test exercises
 
 - Two real web clients join a real local PartyKit server, ready up and start through the existing UI.
 - The host initializes the board once, using the server's turn order. Both clients see the same board and active player.
@@ -55,7 +55,7 @@ Do not use two tabs sharing the same localStorage as two independent players: th
 
 ## Implementation boundary
 
-`src/session` contains transport contracts, the versioned command/receipt protocol, in-memory deduplication and recipient views. `src/network/sessionTransport.ts` adapts PartyKit. Host/peer managers connect that session to the existing Redux rule implementation. The rule implementation in `network/host.ts` is retained; full engine extraction is still pending.
+`src/session` contains transport contracts, the versioned command/receipt protocol, in-memory deduplication and recipient views. `src/network/sessionTransport.ts` adapts PartyKit. Host/peer managers connect that session to the existing Redux rule implementation. Setup retains the rule implementation in `network/host.ts`. Economy and turn rules have since been extracted into typed transitions; see [stage 2](BASE_RULES.md). Full engine extraction is still pending.
 
 Revision advances once per accepted rule command. Rejected commands have stable receipts. Receipt history is in memory and bounded to 10,000 unique commands; reaching the limit rejects additional commands instead of silently dropping deduplication records. This is not durable exactly-once delivery across host restart.
 
@@ -63,7 +63,7 @@ A `SessionView` is a recipient view, not a recoverable authoritative snapshot. I
 
 Only public building logs are projected in this slice. Other log/statistics/trade projections still need review before complete multiplayer rule support is claimed. The local in-browser host remains trusted and can inspect everyone's secrets. Unit tests cover command receipts, secrecy and setup geometry. Existing modules still include unchecked TypeScript and unrelated lint debt; see FOLLOW_UPS.md.
 
-## Verification in this change (2026-11-01)
+## Stage 1 verification (2026-11-01)
 
 - Six Vitest tests pass.
 - The Chromium E2E scenario passes with two isolated clients and a real local relay.
@@ -71,3 +71,7 @@ Only public building logs are projected in this slice. Other log/statistics/trad
 - Scoped ESLint checks pass for the new session/transport/validation modules, rewritten host/peer managers, player panel and test files.
 - The full repository lint command still fails: 372 errors and 22 warnings, compared with 399 errors and 23 warnings in the initial audit. These are follow-up work, not a passing global quality gate.
 - This does not verify a complete game, WebKit/mobile browsers, durable recovery, offline installation or Bluetooth.
+
+## Stage 2 gameplay test
+
+`npm run test:e2e` also runs `gameplay.spec.ts` (turns, bank trading, city upgrade, development-card purchase and a fixture-based ten-point victory on both clients). See [BASE_RULES.md](BASE_RULES.md) for the exact fixture boundary and updated verification results. Its victory screenshot is saved as `test-results/gameplay-victory.png`.

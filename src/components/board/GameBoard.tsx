@@ -17,6 +17,7 @@ import type {
   HexTile as HexTileType,
   Building,
   Road,
+  Port,
   PlayerColor,
 } from '../../types';
 import { HEX_SIZE } from '../../utils/hexMath';
@@ -48,6 +49,7 @@ export interface GameBoardProps {
   tiles: HexTileType[];
   buildings: Building[];
   roads: Road[];
+  ports?: Port[];
   robberLocation: HexCoord;
   pirateLocation?: HexCoord;
 
@@ -107,6 +109,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   tiles,
   buildings,
   roads,
+  ports,
   robberLocation,
   // pirateLocation is reserved for Seafarers expansion
   pirateLocation: _pirateLocation,
@@ -305,6 +308,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         tiles={tiles}
         buildings={buildings}
         roads={roads}
+        ports={ports}
         robberLocation={robberLocation}
         onVertexClick={handleVertexClick}
         onEdgeClick={handleEdgeClick}

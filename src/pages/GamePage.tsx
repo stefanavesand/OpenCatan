@@ -209,6 +209,7 @@ export function GamePage() {
   const gameStarted = useAppSelector(selectGameStarted);
   const players = useAppSelector(selectPlayers);
   const bank = useAppSelector(selectBank);
+  const ports = useAppSelector(state => state.board.ports);
   const devDeckCount = useAppSelector(selectDevDeckCount);
   const longestRoad = useAppSelector(selectGameLongestRoad);
   const largestArmy = useAppSelector(selectGameLargestArmy);
@@ -301,7 +302,7 @@ export function GamePage() {
         dispatch(openModal({ type: 'trade' }));
         break;
       case 'buyDevCard':
-        dispatch(openModal({ type: 'development-card' }));
+        buyDevCard();
         break;
       case 'endTurn':
         endTurn();
@@ -311,7 +312,7 @@ export function GamePage() {
         setShowBuildMenu(false);
         break;
     }
-  }, [rollDice, endTurn, cancelBuildMode, dispatch]);
+  }, [rollDice, endTurn, buyDevCard, cancelBuildMode, dispatch]);
 
   const handleBuildSelect = useCallback((type: BuildMode) => {
     handleSetBuildMode(type);
@@ -434,7 +435,7 @@ export function GamePage() {
     <GameContainer>
       <div className={styles.gamePage} data-testid="game-state" data-phase={phase}
         data-current-player={currentPlayerId} data-local-player={localPlayerId}
-        data-buildings={buildings.length} data-roads={roads.length}>
+        data-buildings={buildings.length} data-roads={roads.length} data-cities={buildings.filter(b => b.type === 'city').length}>
 
         {sessionError && <p role="alert">{sessionError}</p>}
         {/* Main content area */}
@@ -472,6 +473,7 @@ export function GamePage() {
               tiles={tiles}
               buildings={buildings}
               roads={roads}
+              ports={ports}
               robberLocation={robberLocation}
               pirateLocation={pirateLocation}
               currentPlayerColor={currentPlayerColor}
@@ -540,6 +542,7 @@ export function GamePage() {
               className={`${styles.iconButton} ${canBuyDevCard ? '' : styles.disabled}`}
               onClick={() => canBuyDevCard && handleAction('buyDevCard')}
               disabled={!canBuyDevCard}
+              aria-label="Buy development card"
               title={`Buy Development Card${devDeckCount > 0 ? ` (${devDeckCount} left)` : ' (none left)'}`}
             >
               <img
@@ -552,11 +555,17 @@ export function GamePage() {
               )}
             </button>
 
+            <button className={styles.iconButton} aria-label="View development cards"
+              onClick={() => dispatch(openModal({ type: 'development-card' }))}>
+              Cards ({localPlayer?.developmentCards?.filter(card => !card.isPlayed).length ?? 0})
+            </button>
+
             {/* Road button with count */}
             <button
               className={`${styles.iconButton} ${canBuild && localPlayer?.roadsRemaining ? '' : styles.disabled}`}
-              onClick={() => canBuild && localPlayer?.roadsRemaining && handleAction('build')}
+              onClick={() => canBuild && localPlayer?.roadsRemaining && handleSetBuildMode('road')}
               disabled={!canBuild || !localPlayer?.roadsRemaining}
+              aria-label="Build road"
               title={`Build Road (${localPlayer?.roadsRemaining || 0} remaining)`}
             >
               <img
@@ -570,8 +579,9 @@ export function GamePage() {
             {/* Settlement button with count */}
             <button
               className={`${styles.iconButton} ${canBuild && localPlayer?.settlementsRemaining ? '' : styles.disabled}`}
-              onClick={() => canBuild && localPlayer?.settlementsRemaining && handleAction('build')}
+              onClick={() => canBuild && localPlayer?.settlementsRemaining && handleSetBuildMode('settlement')}
               disabled={!canBuild || !localPlayer?.settlementsRemaining}
+              aria-label="Build settlement"
               title={`Build Settlement (${localPlayer?.settlementsRemaining || 0} remaining)`}
             >
               <img
@@ -585,8 +595,9 @@ export function GamePage() {
             {/* City button with count */}
             <button
               className={`${styles.iconButton} ${canBuild && localPlayer?.citiesRemaining ? '' : styles.disabled}`}
-              onClick={() => canBuild && localPlayer?.citiesRemaining && handleAction('build')}
+              onClick={() => canBuild && localPlayer?.citiesRemaining && handleSetBuildMode('city')}
               disabled={!canBuild || !localPlayer?.citiesRemaining}
+              aria-label="Build city"
               title={`Build City (${localPlayer?.citiesRemaining || 0} remaining)`}
             >
               <img
@@ -602,6 +613,7 @@ export function GamePage() {
               {phase === 'roll' && isMyTurn ? (
                 <button
                   className={`${styles.actionButton} ${styles.primary}`}
+                  aria-label="Roll dice"
                   onClick={() => handleAction('rollDice')}
                 >
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -611,6 +623,7 @@ export function GamePage() {
               ) : isMyTurn && canEndTurn ? (
                 <button
                   className={`${styles.actionButton} ${styles.endTurn}`}
+                  aria-label="End turn"
                   onClick={() => handleAction('endTurn')}
                 >
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -704,6 +717,7 @@ export function GamePage() {
         {/* Trade modal */}
         {modal.type === 'trade' && (
           <TradeModal
+            bankOnly
             isOpen={true}
             onClose={handleCloseTradeModal}
             myResources={myResources}

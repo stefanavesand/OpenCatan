@@ -208,7 +208,7 @@ export function useGamePhase(): UseGamePhaseReturn {
     const canBuild = isMainPhase && isMyTurn;
     const canTrade = isMainPhase && isMyTurn;
     const canBuyDevCard = isMainPhase && isMyTurn;
-    const canPlayDevCard = isMainPhase && isMyTurn && !devCardPlayedThisTurn;
+    const canPlayDevCard = (isMainPhase || phase === 'roll') && isMyTurn && !devCardPlayedThisTurn;
     const canEndTurn = isMainPhase && isMyTurn;
 
     // Required actions

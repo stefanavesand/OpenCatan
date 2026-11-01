@@ -58,7 +58,8 @@ function calculateVPBreakdown(
   player: Player,
   buildings: Building[],
   longestRoadHolderId: string | null,
-  largestArmyHolderId: string | null
+  largestArmyHolderId: string | null,
+  finalScore?: number
 ): VPBreakdown {
   const playerId = player.id;
 
@@ -84,7 +85,8 @@ function calculateVPBreakdown(
   const vpCards = player.developmentCards.filter(
     (c) => c.type === 'victoryPoint' && !c.isPlayed
   );
-  const vpCardCount = vpCards.length;
+  const publicScore = settlementCount + cityCount * 2 + (hasLongestRoad ? 2 : 0) + (hasLargestArmy ? 2 : 0) + cities.filter(c => c.hasMetropolis).length * 2;
+  const vpCardCount = finalScore === undefined ? vpCards.length : Math.max(0, finalScore - publicScore);
 
   // Count metropolises
   const metropolises = cities.filter((c) => c.hasMetropolis);
@@ -171,10 +173,11 @@ export function useVictory(): UseVictoryReturn {
         player,
         buildings,
         longestRoad?.playerId || null,
-        largestArmy?.playerId || null
+        largestArmy?.playerId || null,
+        isGameOver ? finalScores[player.id] : undefined
       ),
     }));
-  }, [players, finalScores, buildings, longestRoad, largestArmy]);
+  }, [players, finalScores, buildings, longestRoad, largestArmy, isGameOver]);
 
   // Get winner
   const winner = useMemo<VictoryPlayer | null>(() => {

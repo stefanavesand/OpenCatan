@@ -42,6 +42,7 @@ export const Vertex: React.FC<VertexProps> = ({
   return (
     <g
       className="vertex"
+      data-can-upgrade={isValid && building?.type === 'settlement' && !!onClick ? 'true' : undefined}
       data-can-place={isValid && !building && !!onClick ? "true" : undefined}
       data-vertex-key={key}
       onClick={handleClick}
@@ -91,6 +92,10 @@ export const Vertex: React.FC<VertexProps> = ({
           color={building.playerColor}
           position={position}
         />
+      )}
+
+      {isValid && building?.type === 'settlement' && onClick && (
+        <circle cx={position.x} cy={position.y} r={18} fill="transparent" className="upgrade-hit" />
       )}
 
       {/* Debug/development: small dot showing vertex position */}

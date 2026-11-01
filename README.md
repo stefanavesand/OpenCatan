@@ -9,7 +9,7 @@ A free, open-source web implementation of Settlers of Catan with real-time multi
 
 ## Development status and end-to-end testing
 
-The base-game two-player setup flow now has a real-browser test. Other gameplay features remain prototypes and have not been verified as complete. See [the test guide](docs/SESSION_E2E.md) for automated and manual testing, scope and limitations, and [follow-up work](docs/FOLLOW_UPS.md).
+Two real-browser tests now cover two-player setup and scenario-based gameplay through a ten-point victory. Typed rule tests cover the base-game economy, card deck, turn/robber actions and scoring. A naturally played complete game is not yet verified. See [the test guide](docs/SESSION_E2E.md) for automated and manual testing, scope and limitations, and [follow-up work](docs/FOLLOW_UPS.md).
 
 ```bash
 npm ci
@@ -17,7 +17,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The test starts its own local frontend and PartyKit servers. No deployment or login is needed. Offline caching and saved-game recovery are not implemented yet.
+The test starts its own local frontend and PartyKit servers. No deployment or login is needed. Offline caching and saved-game recovery are not implemented yet. See [stage 2 rule verification](docs/BASE_RULES.md) for current coverage. The preview currently supports bank trading; player-to-player trading remains pending.
 
 ## Overview
 

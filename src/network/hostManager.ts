@@ -1,8 +1,12 @@
+import type { DevelopmentCardType } from '@/types/cards';
+import { applyEconomy, createDeck, isEconomyAction, type RuleContext } from '@/game/engine/base/economy';
+import { applyTurn, isTurnAction } from '@/game/engine/base/turn';
+import { createBasePorts } from '@/game/engine/base/board';
 import type { GameAction, GameSettings } from '@/types/game';
 import { createPlayer } from '@/types/player';
 import { store } from '@/game/state/store';
 import { startGame, setSetupState } from '@/game/state/slices/gameSlice';
-import { setTiles, resetBoard } from '@/game/state/slices/boardSlice';
+import { setTiles, setPorts, resetBoard } from '@/game/state/slices/boardSlice';
 import { setPlayers, setTurnOrder } from '@/game/state/slices/playersSlice';
 import { validateAction, processActionAsHost } from './host';
 import { generateBeginnerBoard } from '@/utils/boardGenerator';
@@ -16,7 +20,17 @@ export class HostManager {
   private session: HostSession | null = null;
   private unsubscribe?: () => void;
   private transport: SessionTransport;
-  constructor(transport: SessionTransport) { this.transport = transport; }
+  private deck: DevelopmentCardType[] = [];
+  private services: RuleContext & { randomInt: (max: number) => number };
+  constructor(transport: SessionTransport, services?: RuleContext & { randomInt: (max: number) => number }) {
+    this.transport = transport;
+    this.services = services ?? { id: () => crypto.randomUUID(), now: () => Date.now(), randomInt: max => {
+      const limit = Math.floor(2 ** 32 / max) * max;
+      const bytes = new Uint32Array(1);
+      do { crypto.getRandomValues(bytes); } while (bytes[0] >= limit);
+      return bytes[0] % max;
+    } };
+  }
 
   startGame(gameId: string, turnOrder: string[]): void {
     if (this.session?.gameId === gameId) return;
@@ -35,6 +49,8 @@ export class HostManager {
     store.dispatch(setSetupState({ currentPlacementIndex: 0, lastPlacedSettlement: null,
       placementsComplete: false, playerPlacements: Object.fromEntries(players.map(p => [p.id,
         { settlement1: null, road1: null, settlement2: null, road2: null }])) }));
+    store.dispatch(setPorts(createBasePorts(this.viewState())));
+    this.deck = createDeck(this.services.randomInt);
     this.session = new HostSession(gameId);
     this.unsubscribe = this.transport.subscribe(message => {
       if (message.type === 'SESSION_COMMAND') this.handleCommand(message.command);
@@ -46,7 +62,7 @@ export class HostManager {
   handleAction(playerId: string, action: GameAction): { success: boolean; error?: string } {
     if (!this.session) return { success: false, error: 'Host session not initialized' };
     return this.handleCommand({ protocolVersion: 1, gameId: this.session.gameId,
-      commandId: crypto.randomUUID(), playerId, expectedRevision: this.session.revision, action });
+      commandId: this.services.id(), playerId, expectedRevision: this.session.revision, action });
   }
 
   handleCommand(command: Command): { success: boolean; error?: string } {
@@ -54,7 +70,24 @@ export class HostManager {
     const receipt = this.session.execute(command, () => {
       const state = store.getState();
       if (!state.players.players.some(p => p.id === command.playerId)) return { success: false, error: 'Unknown player' };
-      const action = { ...command.action, playerId: command.playerId, timestamp: Date.now() } as unknown as import("./messages").GameAction;
+      const current = this.viewState();
+      if (isEconomyAction(command.action, current)) {
+        const result = applyEconomy(current, this.deck, command.action, command.playerId, this.services);
+        if (result.success) {
+          this.deck = result.deck;
+          store.dispatch({ type: 'session/applyView', payload: result.state });
+        }
+        return { success: result.success, error: 'error' in result ? result.error : undefined };
+      }
+      if (isTurnAction(command.action)) {
+        const result = applyTurn(current, command.action, command.playerId, this.services.randomInt);
+        if (result.success) store.dispatch({ type: 'session/applyView', payload: result.state });
+        return { success: result.success, error: 'error' in result ? result.error : undefined };
+      }
+      if (!state.game.phase.startsWith('setup-') || !['BUILD_SETTLEMENT', 'BUILD_ROAD'].includes(command.action.type)) {
+        return { success: false, error: 'This action is not available in the base-game preview; use bank trading' };
+      }
+      const action = { ...command.action, playerId: command.playerId, timestamp: this.services.now() } as unknown as import("./messages").GameAction;
       const validation = validateAction(action, state);
       if (!validation.isValid) return { success: false, error: validation.error };
       return processActionAsHost(action, state, store.dispatch);
@@ -78,7 +111,7 @@ export class HostManager {
   broadcastState(): void {
     for (const player of store.getState().players.players) this.sendView(player.id);
   }
-  stopHost(): void { this.unsubscribe?.(); this.unsubscribe = undefined; this.session = null; }
+  stopHost(): void { this.unsubscribe?.(); this.unsubscribe = undefined; this.session = null; this.deck = []; }
   get isHost(): boolean { return this.session !== null; }
   get revision(): number { return this.session?.revision ?? -1; }
 

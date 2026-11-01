@@ -23,7 +23,8 @@ export class HostSession {
     else result = apply();
     if (result.success) this.revision++;
     const receipt: Receipt = { protocolVersion: PROTOCOL_VERSION, gameId: this.gameId,
-      commandId: command.commandId, revision: this.revision, ...result };
+      commandId: command.commandId, revision: this.revision, success: result.success,
+      ...(result.error ? { error: result.error } : {}) };
     this.receipts.set(key, { fingerprint, receipt });
     return receipt;
   }

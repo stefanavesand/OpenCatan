@@ -125,7 +125,7 @@ export function useDevCards(): UseDevCardsReturn {
     if (hasPlayedThisTurn) return false;
 
     // Must be in main phase
-    if (gameState.phase !== 'main') return false;
+    if (gameState.phase !== 'main' && gameState.phase !== 'roll') return false;
 
     // Must have at least one playable card (not VP, not bought this turn)
     const playableCards = myDevCards.filter((card) => {

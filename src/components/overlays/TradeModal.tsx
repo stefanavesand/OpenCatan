@@ -43,6 +43,7 @@ export interface CounterOfferData {
 
 export interface TradeModalProps {
   isOpen: boolean;
+  bankOnly?: boolean;
   onClose: () => void;
   /** Current player's resources */
   myResources: ResourceCounts;
@@ -423,7 +424,7 @@ const BankTradeTab: React.FC<BankTradeTabProps> = ({
         <div className={styles.resourceButtonGrid}>
           {RESOURCES.map(resource => {
             const bankHas = bankResources[resource];
-            const canSelect = resource !== giveResource && bankHas > 0 && receiveAmount > 0;
+            const canSelect = !!giveResource && resource !== giveResource && bankHas > 0;
 
             return (
               <button
@@ -466,6 +467,7 @@ const BankTradeTab: React.FC<BankTradeTabProps> = ({
  * TradeModal main component
  */
 export const TradeModal: React.FC<TradeModalProps> = ({
+  bankOnly = false,
   isOpen,
   onClose,
   myResources,
@@ -481,7 +483,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   counterOfferData,
   onCounterOffer,
 }) => {
-  const [activeTab, setActiveTab] = useState<TradeTab>('player');
+  const [activeTab, setActiveTab] = useState<TradeTab>(bankOnly ? 'bank' : 'player');
 
   // Determine if this is a counter-offer modal
   const isCounterOfferMode = !!counterOfferData;
@@ -489,9 +491,9 @@ export const TradeModal: React.FC<TradeModalProps> = ({
   // Reset tab when modal opens
   useEffect(() => {
     if (isOpen) {
-      setActiveTab('player');
+      setActiveTab(bankOnly ? 'bank' : 'player');
     }
-  }, [isOpen]);
+  }, [isOpen, bankOnly]);
 
   // Handle player trade submission (wraps onPlayerTrade or onCounterOffer)
   const handlePlayerTradeSubmit = useCallback((offer: PlayerTradeOffer) => {
@@ -522,6 +524,7 @@ export const TradeModal: React.FC<TradeModalProps> = ({
               type="button"
               className={`${styles.tab} ${activeTab === 'player' ? styles.tabActive : ''}`}
               onClick={() => setActiveTab('player')}
+              disabled={bankOnly} title={bankOnly ? 'Player trading is not available in this preview' : undefined}
             >
               Player Trade
             </button>

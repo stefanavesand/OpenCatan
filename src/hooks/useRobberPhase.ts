@@ -1,3 +1,4 @@
+import { robberPlacements } from '@/game/engine/base/turn';
 // @ts-nocheck
 // TODO: Fix TypeScript errors in this file
 /**
@@ -75,7 +76,8 @@ export interface UseRobberPhaseReturn {
 export function useRobberPhase(): UseRobberPhaseReturn {
   const gameState = useSelector((state: RootState) => state.game);
   const boardState = useSelector((state: RootState) => state.board);
-  const players = useSelector((state: RootState) => state.players.players) || [];
+  const playerState = useSelector((state: RootState) => state.players);
+  const players = playerState.players;
   const localPlayerId = useSelector((state: RootState) => state.lobby.localPlayerId);
   const { discardResources, moveRobber: moveRobberAction, stealResource, skipSteal: skipStealAction } = useGameActions();
 
@@ -119,7 +121,7 @@ export function useRobberPhase(): UseRobberPhaseReturn {
     const player = players.find((p) => p.id === localPlayerId);
     if (!player) return 0;
 
-    const cardCount = Object.values(player.resources).reduce((sum, c) => sum + c, 0);
+    const cardCount = player.resourceCount ?? Object.values(player.resources).reduce((sum, c) => sum + c, 0);
     const discardLimit = gameState.settings.discardLimit || 7;
 
     // Only discard if over the limit
@@ -158,7 +160,7 @@ export function useRobberPhase(): UseRobberPhaseReturn {
         };
       }
 
-      const cardCount = Object.values(player.resources).reduce((sum, c) => sum + c, 0);
+      const cardCount = player.resourceCount ?? Object.values(player.resources).reduce((sum, c) => sum + c, 0);
       // Calculate discard required based on current card count
       const discardRequired = Math.floor(cardCount / 2);
 
@@ -174,66 +176,9 @@ export function useRobberPhase(): UseRobberPhaseReturn {
   }, [gameState.pendingDiscard, players]);
 
   // Get valid robber hexes
-  const validRobberHexes = useMemo((): HexCoord[] => {
-    // Get all non-water, non-current-robber hexes
-    const validHexes: HexCoord[] = [];
-
-    // Helper to get all 6 vertex keys adjacent to a hex
-    const getAdjacentVertexKeys = (q: number, r: number): string[] => [
-      // Top and bottom vertices of this hex
-      `${q},${r}:N`,
-      `${q},${r}:S`,
-      // Adjacent vertices from neighboring hexes
-      `${q - 1},${r + 1}:N`,  // Bottom-left neighbor's N vertex
-      `${q},${r + 1}:N`,      // Bottom neighbor's N vertex
-      `${q},${r - 1}:S`,      // Top neighbor's S vertex
-      `${q + 1},${r - 1}:S`,  // Top-right neighbor's S vertex
-    ];
-
-    for (const tile of tiles) {
-      // Skip water tiles
-      if (tile.terrain === 'water') continue;
-
-      // Skip current robber location
-      if (
-        robberLocation &&
-        tile.coord.q === robberLocation.q &&
-        tile.coord.r === robberLocation.r
-      ) {
-        continue;
-      }
-
-      // Get all vertices adjacent to this hex
-      const adjacentVertexKeys = getAdjacentVertexKeys(tile.coord.q, tile.coord.r);
-
-      // Find all players with buildings adjacent to this hex
-      const adjacentPlayerIds = new Set<string>();
-      for (const building of buildings) {
-        const buildingKey = `${building.vertex.hex.q},${building.vertex.hex.r}:${building.vertex.direction}`;
-        if (adjacentVertexKeys.includes(buildingKey)) {
-          adjacentPlayerIds.add(building.playerId);
-        }
-      }
-
-      // Skip hexes where ANY player has < 3 VP (friendly robber rule - always active)
-      if (adjacentPlayerIds.size > 0) {
-        // Check if any adjacent player has < 3 VP
-        const hasPlayerUnder3VP = Array.from(adjacentPlayerIds).some((playerId) => {
-          const player = players.find((p) => p.id === playerId);
-          return player && (player.victoryPoints || 0) < 3;
-        });
-
-        // If any adjacent player has < 3 VP, skip this hex
-        if (hasPlayerUnder3VP) {
-          continue;
-        }
-      }
-
-      validHexes.push(tile.coord);
-    }
-
-    return validHexes;
-  }, [tiles, robberLocation, buildings, players]);
+  const validRobberHexes = useMemo((): HexCoord[] => robberPlacements({
+    game: gameState, board: boardState, players: playerState,
+  }, localPlayerId ?? ''), [gameState, boardState, playerState, localPlayerId]);
 
   // Get current robber location
   const currentRobberLocation = robberLocation;
@@ -270,7 +215,7 @@ export function useRobberPhase(): UseRobberPhaseReturn {
       const player = players.find((p) => p.id === building.playerId);
       if (!player) continue;
 
-      const cardCount = Object.values(player.resources).reduce((sum, c) => sum + c, 0);
+      const cardCount = player.resourceCount ?? Object.values(player.resources).reduce((sum, c) => sum + c, 0);
 
       // Only include players with cards
       if (cardCount > 0) {
