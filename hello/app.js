@@ -1,4 +1,5 @@
-const BUILD_ID = 'd79550e5c3ba';
+import { mountLibrary, prepareForUpdate } from './library.js';
+const BUILD_ID = '287a6e2147b6';
 const offline = document.querySelector('#offline');
 const detail = document.querySelector('#detail');
 const check = document.querySelector('#check');
@@ -65,12 +66,14 @@ async function start() {
   }
 }
 check.addEventListener('click', () => verify(true));
-update.addEventListener('click', () => {
+update.addEventListener('click', async () => {
   if (!registration?.waiting) return;
-  reloadForUpdate = true; update.disabled = true;
+  update.disabled = true;
+  await prepareForUpdate();
+  reloadForUpdate = true;
   registration.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
 });
 navigator.serviceWorker?.addEventListener('controllerchange', () => { if (reloadForUpdate) window.location.reload(); });
 window.addEventListener('online', showNetwork); window.addEventListener('offline', showNetwork);
 window.matchMedia('(display-mode: standalone)').addEventListener('change', showDisplay);
-showNetwork(); showDisplay(); start();
+mountLibrary(); showNetwork(); showDisplay(); start();
