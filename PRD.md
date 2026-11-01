@@ -1,8 +1,8 @@
 # Game Shelf / OpenCatan — Product Requirements Document
 
-Version 3.1 · 2026-11-01 · Requirements baseline for the next stage, not a claim of launch readiness.
+Version 3.2 · 2026-11-01 · Requirements baseline for the next stage, not a claim of launch readiness.
 
-This PRD supersedes the [original PRD](docs/archive/PRD-2025-12-29.md). Its game ideas remain available as history; claims of feature completeness, asset licensing, host migration and all expansions at launch are not verified commitments. This document takes precedence for future work. The document version is independent of the app version. Version 3.1 translates the 3.0 baseline into English without changing requirement IDs or release scope.
+This PRD supersedes the [original PRD](docs/archive/PRD-2025-12-29.md). Its game ideas remain available as history; claims of feature completeness, asset licensing, host migration and all expansions at launch are not verified commitments. This document takes precedence for future work. The document version is independent of the app version. Version 3.1 translated the baseline into English. Version 3.2 adds staged bot requirements; existing requirement IDs remain stable.
 
 ## 1. Goals and audience
 
@@ -20,11 +20,13 @@ The app and all maintained repository content must be in English. Conversation w
 |---|---|
 | E0 — reference game | Installable PWA, locally saved tic-tac-toe and internet play. The baseline exists; remaining failure paths and measurements must be verified under §8. |
 | E1 — shared session foundation | Independent rule engine, versioned session protocol, durable storage, private views, defined states/errors and a selected managed execution environment. Verify with tic-tac-toe first. |
-| E2 — OpenCatan base game | 3–4 players, touch UI, complete scoped base game, saving and reconnection. Includes player trading; verify complete natural games. Distribution of bundled assets requires rights review. |
+| E2 — OpenCatan base game | 3–4 human/bot players, touch UI, complete scoped base game, saving and reconnection. Includes player trading; verify complete natural games. Distribution of bundled assets requires rights review. |
 | E3 — native and local transports | Capacitor iOS/Android; verify LAN/TCP, then Bluetooth separately. Document host trust and recovery. |
-| Later | Expansions, 5–6 players, direct P2P/WebRTC, account linking, spectators, AI and automatic host migration need separate prioritization. Friends follow account linking and identity recovery; invitations remain room links for now. |
+| Later | Expansions, 5–6 players, direct P2P/WebRTC, account linking, spectators, advanced AI and automatic host migration need separate prioritization. Friends follow account linking and identity recovery; invitations remain room links for now. Basic bots are now in scope under the staged plan below; advanced learned/LLM opponents remain later work. |
 
 Avoid a large rewrite: replace bounded flows and preserve working installations/saves. Native, Bluetooth and expansions are outside the next implementation. Existing PartyKit code is reuse material, not a binding provider choice. Lovable Cloud is verified prototype hosting; the final runtime for a shared TypeScript engine remains open.
+
+Basic bot stages: **B1** local Catan setup bots, **B2** complete base-game decisions and repeatable headless simulations, **B3** internet play with two humans plus one bot. B3 depends on Catan rooms and managed authority; B1 remains shared-device setup. [Bot requirements](docs/BOT_REQUIREMENTS.md) define BOT-01–18, acceptance tests BT-01–12 and release gates. These are planned requirements, not implemented features.
 
 ## 3. Current status and evidence
 
@@ -63,6 +65,7 @@ Requirement IDs are stable. A = mandatory for the stated stage; B = later improv
 | UX-08 / E2 / A | I want to play a correct base game on iPad. | All scoped base rules work with touch, clear turn/error feedback and no hover requirement. Complete natural 3- and 4-player games finish without manually manipulating state. |
 | UX-09 / E3 / A | I want local play without a service account. | An offline local identity participates through an available native transport; show capabilities/limitations. Do not contact internet authentication. Host loss gives an honest pause/recovery flow, not unsafe automatic migration. |
 | UX-10 / E1 / A | I want to understand how my save is protected. | Request persistent browser storage where supported, handle denial and offer a safe backup for local games. Distinguish cloud saves from local copies. Copies containing secrets have an explicit audience and warning. |
+| UX-11 / B1–B3 / A | I want to play with fewer human participants and reproduce bot-driven failures. | Explicit bot seats fill a 3-/4-seat game without taking human turns or seeing extra information. B1 supports local setup; B2 covers all base-game phases and seeded replay; B3 supports two invited human devices plus one bot. Meet [BOT-01–18 and staged acceptance gates](docs/BOT_REQUIREMENTS.md); no full internet-game promise is introduced by setup bots. |
 
 ## 6. Cross-cutting requirements
 
@@ -132,6 +135,8 @@ Unit tests verify pure rules/states; integration tests verify atomic storage/pro
 | T-09 | UX-07, DATA-03, OPS-01 | Old client/new backend and inverse, controlled update with pending move, migration failure and rollback. Integration + E2E. |
 | T-10 | UX-09, SEC-06, OPS-03/SEC-07 | Local host loss/recovery with protected secrets; expiry, cleanup/deletion and receipt retention with explicit recovery error. Integration/devices by stage. |
 | T-11 | LEG-01 | Asset inventory with licensing evidence/attribution and inspection of the actual distribution package. Document/package review. |
+
+Bot-specific coverage BT-01–12 and B1/B2/B3 gates are maintained in [BOT_REQUIREMENTS.md](docs/BOT_REQUIREMENTS.md). They supplement T-01–11 and do not replace privacy, persistence, rights or real-device requirements.
 
 E1 closes only after implementing contracts/states in the reference game, verifying T-01–05 and relevant T-08–10, documenting the threat model/measurement limits and demonstrating managed shared-rule execution. E2 additionally requires T-06/07/11, complete scoped base gameplay, secrecy review and full internal snapshot recovery. A prototype on GitHub Pages does not satisfy these gates by itself.
 

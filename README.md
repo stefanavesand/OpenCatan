@@ -11,6 +11,8 @@ A free, open-source web implementation of Settlers of Catan with real-time multi
 
 The current [PRD](PRD.md) defines staged scope, user stories, security requirements and release gates. The [HLD](docs/HLD.md) describes the proposed architecture, state charts and implementation gaps. The original PRD is archived and does not describe verified launch readiness.
 
+Planned computer opponents: [bot requirements and staged acceptance tests](docs/BOT_REQUIREMENTS.md). Bots are not implemented yet.
+
 ## Installed PWA proof
 
 The first [Catan setup preview](docs/CATAN_SETUP.md) is available in Game Shelf 1.3.0: local 3–4 player starting placements with offline saves and original SVG graphics. This preview ends after setup; it is separate from the legacy full-game preview below.

@@ -24,3 +24,5 @@ Local tracking for this implementation. The repository requests the `bd` CLI in 
 - LANGUAGE-1: English UI/repository policy is implemented in PWA 1.2.2. Preserve legacy storage keys, lock names and local route alias. See ENGLISH_RELEASE.md. Verify the installed English update on the actual iPad.
 
 - CATAN-PWA-1: Version 1.3.0 implements the user-selected local iPad setup preview with shared pure TypeScript placement rules, durable saves and original SVG visuals. See CATAN_SETUP.md. Verify actual iPad touch/offline recovery. Next phases, full snapshots, private projections and managed online authority remain open; this does not close E1/E2. Preserve ruleVersion-1 fixed-layout replay compatibility.
+
+- BOT-PLAN-1: Review/implement the planned BOT-01–18 baseline in BOT_REQUIREMENTS.md. B1 local setup first; B2 full-phase/headless coverage; B3 two internet humans plus one bot depends on Catan rooms. Select and pin a licensed policy, define observation/work/fallback limits and safe save migration, then implement through ordinary authority commands. No bot code or new bot test passes are claimed by the requirements change.

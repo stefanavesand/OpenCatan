@@ -1,7 +1,7 @@
 # Game Shelf / OpenCatan — High-Level Design
 
 Version 1.1 · 2026-11-01 · Proposed E1/E2 target design, not an implemented system.
-Requirements baseline: [PRD 3.1](../PRD.md). The PWA and OpenCatan preview are separate implementations to be unified incrementally. Version 1.1 translates the 1.0 baseline into English; it does not select a new provider or change the implementation scope.
+Requirements baseline: [PRD 3.2](../PRD.md). The PWA and OpenCatan preview are separate implementations to be unified incrementally. Version 1.1 translates the 1.0 baseline into English; it does not select a new provider or change the implementation scope.
 
 ## 1. Decisions and boundaries
 
@@ -311,3 +311,7 @@ Each step should be reviewable, testable and releasable without a large rewrite.
 ### Implementation note: first slice
 
 PWA 1.2.1 implements a first pure client policy for connection/command outcomes, failure codes and retry. See [SESSION_STATES.md](SESSION_STATES.md) for verification/gaps. User confirmed the version works. Contracts, backend payload binding and shared rule execution remain incomplete; charts above are still target specifications.
+
+### Bot requirements baseline
+
+[Bot requirements](BOT_REQUIREMENTS.md) introduce planned BOT-01–18 and B1/B2/B3 gates. A future bot policy consumes only an authorized immutable player observation and legal choices; the trusted session authority schedules it and submits ordinary commands. Local setup runs offline on the local authority; internet bots run with the managed authority. Durable intent recovery, bounded computation, cancellation and policy/version compatibility must be designed before implementation. Source choice and execution details remain open; no bot runtime is implemented by this document change.
