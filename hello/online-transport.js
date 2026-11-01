@@ -1,3 +1,4 @@
+import { retryAfter } from './session-state.js';
 // Managed HTTP transport. Polling is intentional: no persistent socket or iOS background work.
 const URL = 'https://ppaixjqaixwnebhxfjeb.supabase.co';
 const KEY = 'sb_publishable_i1LT3xs1l0Fm0ozPVlo7pA_HBfIbcoq'; // Public publishable key, not a server secret.
@@ -6,16 +7,17 @@ const STATE = 'spelhyllan-online-state-v1';
 export const capabilities = Object.freeze({ onlineRequired: true, liveUpdates: 'foreground-polling', pollIntervalMs: 5000, authority: 'remote', durableCommands: true });
 const locked = (name, action) => navigator.locks ? navigator.locks.request(name, action) : action();
 export class OnlineError extends Error {
-  constructor(message, retryable = false) { super(message); this.retryable = retryable; }
+  constructor(message, code = 'PROTOCOL_ERROR', retryable = false, retryAfterMs = 0) { super(message); this.code = code; this.retryable = retryable; this.retryAfterMs = retryAfterMs; }
 }
 function read(key) {
-  const value = localStorage.getItem(key);
+  let value;
+  try { value = localStorage.getItem(key); } catch { throw new OnlineError('Webbläsaren tillåter inte åtkomst till onlinesparningen.', 'STORAGE_FAILURE'); }
   if (!value) return null;
-  try { return JSON.parse(value); } catch { throw new OnlineError('Sparade onlinedata kunde inte läsas. Ingen ny spelaridentitet har skapats.'); }
+  try { return JSON.parse(value); } catch { throw new OnlineError('Sparade onlinedata kunde inte läsas. Ingen ny spelaridentitet har skapats.', 'STORAGE_FAILURE'); }
 }
 function write(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); }
-  catch { throw new OnlineError('Webbläsaren kunde inte spara onlinedata. Åtgärda lagringen innan du fortsätter.'); }
+  catch { throw new OnlineError('Webbläsaren kunde inte spara onlinedata. Åtgärda lagringen innan du fortsätter.', 'STORAGE_FAILURE'); }
 }
 export function savedOnline() { return read(STATE) || { schemaVersion: 1, roomId: null, pending: null }; }
 export function hasPending() { return !!savedOnline().pending; }
@@ -25,16 +27,16 @@ async function http(path, body, token) {
   try {
     const response = await fetch(`${URL}${path}`, { method: 'POST', cache: 'no-store', signal: controller.signal,
       headers: { apikey: KEY, 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(body) });
-    const data = await response.json();
     if (!response.ok) {
-      if (response.status === 429) throw new OnlineError('Speltjänstens gräns är nådd. Vänta en stund och försök igen.', true);
-      if (response.status === 401 || response.status === 403) throw new OnlineError('Spelarens inloggning kunde inte bekräftas. Försök ansluta igen. Dina sparade uppgifter har behållits.', true);
-      throw new OnlineError('Speltjänsten kunde inte slutföra anropet. Försök igen.', true);
+      if (response.status === 429) throw new OnlineError('Speltjänstens gräns är nådd. Vänta en stund och försök igen.', 'RATE_LIMITED', true, retryAfter(response.headers.get('Retry-After'), Date.now()));
+      if (response.status === 401 || response.status === 403 || (response.status === 400 && path.startsWith('/auth/'))) throw new OnlineError('Spelarens inloggning kunde inte bekräftas. Försök ansluta igen. Dina sparade uppgifter har behållits.', 'AUTH_REQUIRED');
+      if (response.status >= 500 || response.status === 408) throw new OnlineError('Speltjänsten kunde inte slutföra anropet. Försök igen.', 'SERVER_UNAVAILABLE', true);
+      throw new OnlineError('Speltjänsten kunde inte godkänna anropet. Dina sparade uppgifter har behållits.', 'PROTOCOL_ERROR');
     }
-    return data;
+    try { return await response.json(); } catch { throw new OnlineError('Speltjänsten gav ett oläsbart svar. Det väntande kommandot har behållits.', 'PROTOCOL_ERROR'); }
   } catch (error) {
     if (error instanceof OnlineError) throw error;
-    throw new OnlineError('Ingen kontakt med speltjänsten. Anslut internet och försök igen.', true);
+    throw new OnlineError('Ingen kontakt med speltjänsten. Anslut internet och försök igen.', 'NETWORK_UNAVAILABLE', true);
   } finally { clearTimeout(timer); }
 }
 async function identity() {
@@ -55,14 +57,18 @@ function validRoom(room) {
 const errors = { room_full: 'Rummet har redan två spelare.', room_not_found: 'Rummet saknas eller tillhör en annan spelare.', revision_conflict: 'Partiet har ändrats. Den senaste spelplanen har hämtats; välj ditt drag igen.', not_started: 'Väntar på den andra spelaren.', not_your_turn: 'Det är den andra spelarens tur.', cell_occupied: 'Rutan är upptagen.', game_over: 'Partiet är avslutat. Skapa ett nytt rum för att spela igen.', invalid_cell: 'Rutan är ogiltig.', bad_request: 'Anropet kunde inte tolkas.' };
 function result(data) {
   if (data?.ok === true && data.apiVersion === 1) return { room: validRoom(data.room), duplicate: !!data.duplicate };
-  if (data?.ok === false && data.error?.code) return { error: errors[data.error.code] || 'Draget kunde inte godkännas.', room: data.error.room ? validRoom(data.error.room) : null };
-  throw new OnlineError('Speltjänsten gav ett okänt svar.', true);
+  if (data?.ok === false && data.error?.code) {
+    if (data.error.code === 'unauthenticated') throw new OnlineError('Spelarens inloggning kunde inte bekräftas. Dina sparade uppgifter har behållits.', 'AUTH_REQUIRED');
+    if (!Object.hasOwn(errors, data.error.code)) throw new OnlineError('Speltjänsten gav en okänd felkod. Uppdatera appen innan du försöker igen.', 'UNSUPPORTED_VERSION');
+    return { errorCode: data.error.code, error: errors[data.error.code], room: data.error.room ? validRoom(data.error.room) : null };
+  }
+  throw new OnlineError('Speltjänsten gav ett okänt svar. Uppdatera appen innan du försöker igen.', 'UNSUPPORTED_VERSION');
 }
 // Persist the intent before sending it. A lost response/reload reuses this exact command.
 export async function command(kind, args = {}) {
   return locked('spelhyllan-online-command', async () => {
     const state = savedOnline();
-    if (state.schemaVersion !== 1) throw new OnlineError('Sparningen kräver en annan appversion.');
+    if (state.schemaVersion !== 1) throw new OnlineError('Sparningen kräver en annan appversion.', 'UNSUPPORTED_VERSION');
     if (!state.pending && !kind) return null;
     const session = await identity();
     let pending = state.pending;
@@ -80,7 +86,7 @@ export async function command(kind, args = {}) {
 }
 export async function getRoom() {
   const state = savedOnline();
-  if (state.schemaVersion !== 1) throw new OnlineError('Sparningen kräver en annan appversion.');
+  if (state.schemaVersion !== 1) throw new OnlineError('Sparningen kräver en annan appversion.', 'UNSUPPORTED_VERSION');
   if (!state.roomId) return null;
   const session = await identity();
   return result(await http('/rest/v1/rpc/v1_get_room', { p_room_id: state.roomId }, session.access_token));

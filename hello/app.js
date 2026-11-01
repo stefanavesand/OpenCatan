@@ -1,6 +1,6 @@
 import { mountLibrary, prepareForUpdate } from './library.js';
 import { mountOnline, prepareOnlineUpdate } from './online.js';
-const BUILD_ID = '094f2045f703';
+const BUILD_ID = '5985bc3b5561';
 const offline = document.querySelector('#offline');
 const detail = document.querySelector('#detail');
 const check = document.querySelector('#check');
