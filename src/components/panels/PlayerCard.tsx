@@ -132,6 +132,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   if (compact) {
     return (
       <div
+        data-testid={`player-${player.id}`} data-resource-count={player.resourceCount} data-victory-points={player.victoryPoints}
         className={`${styles.playerCardCompact} ${isCurrentTurn ? styles.currentTurnCompact : ''} ${isMe ? styles.isMeCompact : ''}`}
         style={{
           '--player-color': playerColor,

@@ -1,3 +1,4 @@
+import { isCommand } from "../src/session/protocol";
 /**
  * OpenCatan PartyKit Server
  *
@@ -273,6 +274,8 @@ export default class OpenCatanServer implements Party.Server {
    * - Game actions (relayed to host)
    * - Chat messages
    */
+  onRequest(): Response { return new Response('OpenCatan relay ready'); }
+
   async onMessage(message: string, sender: Party.Connection) {
     this.updateActivity();
 
@@ -292,6 +295,12 @@ export default class OpenCatanServer implements Party.Server {
 
     try {
       switch (parsed.type) {
+        case 'SESSION_COMMAND':
+        case 'SESSION_REQUEST':
+        case 'SESSION_DELIVERY':
+          this.handleSessionMessage(sender, parsed);
+          break;
+
         case 'JOIN_ROOM':
           await this.handleJoinRoom(sender, parsed.playerName, parsed.sessionToken);
           break;
@@ -333,7 +342,7 @@ export default class OpenCatanServer implements Party.Server {
           break;
 
         case 'GAME_STATE':
-          await this.handleGameState(sender, (parsed as { state: unknown }).state);
+          this.sendTo(sender, { type: 'ERROR', code: 'LEGACY_PROTOCOL_DISABLED', message: 'Use recipient-specific session delivery' });
           break;
 
         case 'PING':
@@ -769,6 +778,7 @@ export default class OpenCatanServer implements Party.Server {
 
     // Start the game
     this.state.gameStarted = true;
+    this.state.gameId = crypto.randomUUID();
 
     // Randomize turn order
     const turnOrder = shuffle(connectedPlayers.map(p => p.id));
@@ -780,6 +790,7 @@ export default class OpenCatanServer implements Party.Server {
     // Broadcast game started
     this.broadcast({
       type: 'GAME_STARTED',
+      gameId: this.state.gameId,
       turnOrder,
     });
 
@@ -794,6 +805,35 @@ export default class OpenCatanServer implements Party.Server {
    * The host's game engine processes the action and broadcasts
    * the updated state to all players.
    */
+  private handleSessionMessage(conn: Party.Connection, message: import('../src/session/protocol').SessionClientMessage): void {
+    const player = this.getPlayerFromConnection(conn);
+    const fail = (code: string) => this.sendTo(conn, { type: 'ERROR', code, message: code });
+    if (!player || !this.state.gameStarted || !this.state.gameId) return fail('NO_ACTIVE_SESSION');
+    if (message.type === 'SESSION_COMMAND') {
+      if (!isCommand(message.command)) return fail('INVALID_COMMAND');
+      if (message.command.gameId !== this.state.gameId) return fail('WRONG_GAME');
+      const host = this.findConnectionByPlayerId(this.state.hostId!);
+      if (!host) return fail('HOST_DISCONNECTED');
+      this.sendTo(host, { type: 'SESSION_COMMAND', command: { ...message.command, playerId: player.id } });
+      return;
+    }
+    if (message.gameId !== this.state.gameId) return fail('WRONG_GAME');
+    if (message.type === 'SESSION_REQUEST') {
+      const host = this.findConnectionByPlayerId(this.state.hostId!);
+      if (!host) return fail('HOST_DISCONNECTED');
+      this.sendTo(host, { type: 'SESSION_REQUEST', gameId: this.state.gameId, playerId: player.id });
+      return;
+    }
+    if (player.id !== this.state.hostId) return fail('NOT_HOST');
+    const payload = message.payload;
+    if (!payload || (payload.kind !== 'view' && payload.kind !== 'receipt')) return fail('INVALID_DELIVERY');
+    const meta = payload.kind === 'view' ? payload : payload.receipt;
+    if (!meta || meta.gameId !== this.state.gameId || meta.protocolVersion !== 1) return fail('INVALID_DELIVERY');
+    if (!this.state.players.has(message.recipientId)) return fail('UNKNOWN_RECIPIENT');
+    const recipient = this.findConnectionByPlayerId(message.recipientId);
+    if (recipient) this.sendTo(recipient, { type: 'SESSION_MESSAGE', gameId: this.state.gameId, payload });
+  }
+
   private async handleGameAction(
     conn: Party.Connection,
     action: unknown
@@ -985,6 +1025,8 @@ export default class OpenCatanServer implements Party.Server {
    * The new host is selected based on join order (first joined = priority).
    */
   private async migrateHost(): Promise<void> {
+    // Private views cannot reconstruct the authoritative state. Keep the host identity.
+    if (this.state.gameStarted) return;
     // Find connected players sorted by join order
     const candidates = Array.from(this.state.players.values())
       .filter(p => p.isConnected && p.id !== this.state.hostId)
@@ -1065,6 +1107,8 @@ export default class OpenCatanServer implements Party.Server {
 
     this.log.info(`Reconnection timeout expired for ${player.name}`);
 
+    // Preserve stable identities during a running game. No automatic host takeover.
+    if (this.state.gameStarted) return;
     // Remove player from room
     this.state.players.delete(playerId);
     this.reconnectTimeouts.delete(playerId);
@@ -1132,6 +1176,8 @@ export default class OpenCatanServer implements Party.Server {
 
     return {
       roomCode: this.state.roomCode,
+      gameId: this.state.gameId,
+      gameStarted: this.state.gameStarted,
       players,
       hostId: this.state.hostId || '',
       settings: this.state.gameSettings,

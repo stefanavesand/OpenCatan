@@ -1,3 +1,4 @@
+import { validSetupSettlements, validSetupRoads } from '@/game/engine/setupValidation';
 /**
  * useGameBoard - Hook for connecting GameBoard to Redux state
  *
@@ -133,6 +134,9 @@ export function useGameBoard(): UseGameBoardReturn {
   const dispatch = useAppDispatch();
 
   // Board state
+  const boardState = useAppSelector(state => state.board);
+  const gameState = useAppSelector(state => state.game);
+  const setupBoard = useMemo(() => ({ board: boardState, game: gameState }), [boardState, gameState]);
   const tiles = useAppSelector(selectTiles);
   const buildings = useAppSelector(selectBuildings);
   const roads = useAppSelector(selectRoads);
@@ -172,6 +176,7 @@ export function useGameBoard(): UseGameBoardReturn {
       return [];
     }
 
+    if (isSetupPhase) return validSetupSettlements(setupBoard);
     const validVertices: VertexCoord[] = [];
     const occupiedVertices = new Set<string>();
     const occupiedEdges = new Set<string>();
@@ -232,7 +237,7 @@ export function useGameBoard(): UseGameBoardReturn {
     }
 
     return validVertices;
-  }, [buildMode, phase, buildings, roads, tiles, localPlayerId, isSetupPhase]);
+  }, [buildMode, phase, buildings, roads, tiles, localPlayerId, isSetupPhase, setupBoard]);
 
   // Calculate valid city vertices (player's settlements)
   const validCityVertices = useMemo(() => {
@@ -251,6 +256,7 @@ export function useGameBoard(): UseGameBoardReturn {
       return [];
     }
 
+    if (isSetupPhase) return validSetupRoads(setupBoard);
     const validEdges: EdgeCoord[] = [];
     const occupiedEdges = new Set<string>();
 
@@ -320,7 +326,7 @@ export function useGameBoard(): UseGameBoardReturn {
     }
 
     return validEdges;
-  }, [buildMode, phase, roads, buildings, tiles, localPlayerId, isSetupPhase, lastPlacedSettlement]);
+  }, [buildMode, phase, roads, buildings, tiles, localPlayerId, isSetupPhase, lastPlacedSettlement, setupBoard]);
 
   // Calculate valid robber hexes
   const validRobberHexes = useMemo(() => {

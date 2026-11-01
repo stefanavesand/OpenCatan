@@ -45,6 +45,9 @@ export const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
  * Complete player state during a game
  */
 export interface Player {
+  /** Public counts on recipient-specific views; hidden hands remain empty. */
+  resourceCount?: number;
+  devCardCount?: number;
   /** Unique identifier for the player */
   id: string;
 

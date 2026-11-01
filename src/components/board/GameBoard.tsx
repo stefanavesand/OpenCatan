@@ -133,6 +133,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   // Determine which valid placements to show based on build mode
   // During setup phase, valid placements are passed directly and should always be shown
   const activeValidVertices = useMemo(() => {
+    if (disabled) return [];
     switch (buildMode) {
       case 'settlement':
         return validSettlementVertices;
@@ -145,9 +146,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         // This allows setup phase to work without requiring buildMode to be set
         return validSettlementVertices.length > 0 ? validSettlementVertices : [];
     }
-  }, [buildMode, validSettlementVertices, validCityVertices]);
+  }, [buildMode, validSettlementVertices, validCityVertices, disabled]);
 
   const activeValidEdges = useMemo(() => {
+    if (disabled) return [];
     switch (buildMode) {
       case 'road':
       case 'ship':
@@ -158,7 +160,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         // show road edges if they're provided
         return validRoadEdges.length > 0 ? validRoadEdges : [];
     }
-  }, [buildMode, validRoadEdges]);
+  }, [buildMode, validRoadEdges, disabled]);
 
   const activeValidHexes = useMemo(() => {
     switch (buildMode) {

@@ -5,7 +5,7 @@ import styles from './lobby.module.css';
 
 interface ColorPickerProps {
   selectedColor: PlayerColor | null;
-  availableColors: PlayerColor[];
+  availableColors: readonly PlayerColor[];
   onChange: (color: PlayerColor) => void;
 }
 

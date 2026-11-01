@@ -42,6 +42,7 @@ export const Vertex: React.FC<VertexProps> = ({
   return (
     <g
       className="vertex"
+      data-can-place={isValid && !building && !!onClick ? "true" : undefined}
       data-vertex-key={key}
       onClick={handleClick}
       style={{ cursor: onClick && (isValid || building) ? 'pointer' : 'default' }}
@@ -65,6 +66,10 @@ export const Vertex: React.FC<VertexProps> = ({
             repeatCount="indefinite"
           />
         </circle>
+      )}
+
+      {showPlacementIndicator && (
+        <circle cx={position.x} cy={position.y} r={12} fill="transparent" className="placement-hit" />
       )}
 
       {/* Hover highlight */}

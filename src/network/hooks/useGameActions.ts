@@ -1,5 +1,4 @@
-// @ts-nocheck
-// TODO: Fix TypeScript errors in this file
+import { setErrorMessage } from '@/game/state/slices/lobbySlice';
 /**
  * useGameActions - React hook for game actions with network routing
  *
@@ -11,7 +10,8 @@
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '@/game/state/store';
-import type { GameAction, TradeOffer, ResourceType, ResourceCounts } from '@/types/game';
+import type { GameAction } from '@/types/game';
+import type { ResourceType, ResourceCounts } from '@/types/common';
 import type { VertexCoord, EdgeCoord, HexCoord } from '@/types/coordinates';
 import type { DevelopmentCardType } from '@/types/cards';
 import { partyClient } from '../partyClient';
@@ -117,21 +117,19 @@ export function useGameActions(): UseGameActionsReturn {
 
   const sendAction = useCallback((action: GameAction) => {
     if (!partyClient.isConnected) {
-      // For local testing without network, process directly through host manager
-      // This allows solo gameplay testing
-      console.log('Processing action locally (not connected):', action.type);
-      hostManager.handleAction(localPlayerId || '', action);
+      // An offline browser must not acquire authority over an online session.
       return;
     }
 
     if (isHost) {
       // Host: process locally via host manager
-      hostManager.handleAction(localPlayerId || '', action);
+      const result = hostManager.handleAction(localPlayerId || '', action);
+      dispatch(setErrorMessage(result.success ? null : result.error ?? 'Action rejected'));
     } else {
       // Peer: send to host
       peerManager.sendAction(action);
     }
-  }, [isHost, localPlayerId]);
+  }, [isHost, localPlayerId, dispatch]);
 
   // ==========================================================================
   // Game Actions
@@ -170,6 +168,7 @@ export function useGameActions(): UseGameActionsReturn {
       // Knight card - initiate robber move phase
       sendAction({
         type: 'PLAY_KNIGHT',
+        hex: params?.hex,
       });
     } else if (card === 'roadBuilding') {
       // Road Building card - enter road building phase

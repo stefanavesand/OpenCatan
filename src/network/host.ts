@@ -11,6 +11,8 @@
  * - Handling host migration
  */
 
+import { validSetupSettlements, validSetupRoads, validCoordinate } from '@/game/engine/setupValidation';
+import { vertexKey, edgeKey } from '@/utils/hex';
 import type { GameState, Player, GameSettings, PlayerColor } from '../types/game';
 import type {
   GameAction,
@@ -22,7 +24,7 @@ import type {
 } from './messages';
 import type { RootState, AppDispatch } from '../game/state/store';
 import { placeBuilding, placeRoad, moveRobber as moveRobberAction, upgradeToCity } from '../game/state/slices/boardSlice';
-import { setPhase, setLastPlacedSettlement, setCurrentPlayer, setDiceRoll, nextTurn, addToBank, removeFromBank, setRoadBuildingRemaining, setLargestArmy, decrementDevDeck, setPendingDiscard, removePendingDiscard } from '../game/state/slices/gameSlice';
+import { updatePlayerSetupPlacements, incrementSetupPlacementIndex, completeSetup, setPhase, setLastPlacedSettlement, setCurrentPlayer, setDiceRoll, nextTurn, addToBank, removeFromBank, setRoadBuildingRemaining, setLargestArmy, decrementDevDeck, setPendingDiscard, removePendingDiscard } from '../game/state/slices/gameSlice';
 import { addLogEntry, createLogEntry } from '../game/state/slices/logSlice';
 import { addResources, removeResources, markCardPlayed, incrementArmySize, addCard, incrementTradesMade, incrementTimesRobbed, incrementTimesWasRobbed } from '../game/state/slices/playersSlice';
 import {
@@ -45,7 +47,7 @@ import type { ResourceType, ResourceCounts, VertexCoord, HexCoord, TradeOffer } 
 function getHexesAdjacentToVertex(vertex: VertexCoord): HexCoord[] {
   const { q, r } = vertex.hex;
   if (vertex.direction === 'N') {
-    return [{ q, r }, { q: q - 1, r }, { q, r: r - 1 }];
+    return [{ q, r }, { q, r: r - 1 }, { q: q + 1, r: r - 1 }];
   } else {
     return [{ q, r }, { q: q - 1, r: r + 1 }, { q, r: r + 1 }];
   }
@@ -229,14 +231,12 @@ function validateRollDice(action: GameAction, state: RootState): ValidationResul
 }
 
 function validateBuildSettlement(action: GameAction, state: RootState): ValidationResult {
-  // TODO: Implement full validation
-  // - Check if in valid phase (setup or main)
-  // - Check if player has resources
-  // - Check if vertex is valid and unoccupied
-  // - Check distance rule
-  // - Check road connection (after setup)
   if (state.game.phase !== 'main' && !state.game.phase.startsWith('setup-settlement')) {
     return { isValid: false, error: 'Cannot build settlement in this phase' };
+  }
+  if (!validCoordinate(action.vertex, ['N', 'S'])) return { isValid: false, error: 'Invalid vertex' };
+  if (state.game.phase.startsWith('setup-') && !validSetupSettlements(state).some(v => vertexKey(v) === vertexKey(action.vertex))) {
+    return { isValid: false, error: 'Invalid settlement placement' };
   }
   return { isValid: true };
 }
@@ -253,7 +253,10 @@ function validateBuildRoad(action: GameAction, state: RootState): ValidationResu
   if (state.game.phase !== 'main' && !state.game.phase.startsWith('setup-road') && state.game.phase !== 'road-building') {
     return { isValid: false, error: 'Cannot build road in this phase' };
   }
-  // TODO: Check resources, valid edge, connection, etc.
+  if (!validCoordinate(action.edge, ['NE', 'E', 'SE'])) return { isValid: false, error: 'Invalid edge' };
+  if (state.game.phase.startsWith('setup-') && !validSetupRoads(state).some(e => edgeKey(e) === edgeKey(action.edge))) {
+    return { isValid: false, error: 'Road must adjoin the new settlement on an empty land edge' };
+  }
   return { isValid: true };
 }
 
@@ -832,6 +835,7 @@ function applyAction(
       const isSetupPhase = gameState.phase.startsWith('setup-settlement');
 
       if (vertex && playerId && player) {
+        dispatch({ type: 'players/updatePlayer', payload: { playerId, updates: { settlementsRemaining: player.settlementsRemaining - 1 } } });
         // Deduct resources if not in setup phase
         if (!isSetupPhase) {
           const settlementCost = { brick: 1, lumber: 1, grain: 1, wool: 1 };
@@ -868,6 +872,9 @@ function applyAction(
         // During setup, transition to road placement phase
         if (gameState.phase.startsWith('setup-settlement')) {
           dispatch(setLastPlacedSettlement(vertex));
+          dispatch(updatePlayerSetupPlacements({ playerId, placements: {
+            [gameState.phase === 'setup-settlement-1' ? 'settlement1' : 'settlement2']: vertex,
+          } }));
 
           // For second settlement (setup-settlement-2), give starting resources
           if (gameState.phase === 'setup-settlement-2') {
@@ -914,6 +921,7 @@ function applyAction(
       const isRoadBuilding = gameState.phase === 'road-building';
 
       if (edge && playerId && player) {
+        dispatch({ type: 'players/updatePlayer', payload: { playerId, updates: { roadsRemaining: player.roadsRemaining - 1 } } });
         // Deduct resources if not in setup phase or road building card phase
         if (!isSetupPhase && !isRoadBuilding) {
           const roadCost = { brick: 1, lumber: 1 };
@@ -951,6 +959,10 @@ function applyAction(
 
         // During setup, transition to next player or settlement phase
         if (gameState.phase.startsWith('setup-road')) {
+          dispatch(updatePlayerSetupPlacements({ playerId, placements: {
+            [gameState.phase === 'setup-road-1' ? 'road1' : 'road2']: edge,
+          } }));
+          dispatch(incrementSetupPlacementIndex());
           const currentPhase = gameState.phase; // e.g., 'setup-road-1' or 'setup-road-2'
           const isRound1 = currentPhase === 'setup-road-1';
           const playerCount = playersState.players.length;
@@ -981,6 +993,7 @@ function applyAction(
               console.log(`Moving to previous player for round 2: ${turnOrder[prevPlayerIndex]}`);
             } else {
               // Setup complete! Start the game
+              dispatch(completeSetup());
               dispatch(setCurrentPlayer(turnOrder[0]));
               dispatch(setPhase('roll'));
               console.log('Setup complete! Starting main game.');

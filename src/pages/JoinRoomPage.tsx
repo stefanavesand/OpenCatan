@@ -79,7 +79,6 @@ export function JoinRoomPage() {
     <JoinRoom
       initialCode={urlCode}
       onJoinRoom={handleJoinRoom}
-      onBack={goToLanding}
       isLoading={isConnecting}
       error={displayError}
     />

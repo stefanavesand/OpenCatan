@@ -70,6 +70,7 @@ export const Edge: React.FC<EdgeProps> = ({
   return (
     <g
       className="edge"
+      data-can-place={isValid && !road && !!onClick ? "true" : undefined}
       data-edge-key={key}
       onClick={handleClick}
       style={{ cursor: onClick && (isValid || road) ? 'pointer' : 'default' }}

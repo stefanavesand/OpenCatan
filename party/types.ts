@@ -68,6 +68,7 @@ export interface PlayerConnection {
  * Game state is managed separately by the host's browser.
  */
 export interface RoomState {
+  gameId?: string;
   /** 6-character alphanumeric room code */
   roomCode: string;
 
@@ -132,6 +133,7 @@ export interface GameSettings {
  * These are relayed to the host for validation when appropriate.
  */
 export type ClientMessage =
+  | import("../src/session/protocol").SessionClientMessage
   | JoinRoomMessage
   | SelectColorMessage
   | MarkReadyMessage
@@ -224,6 +226,7 @@ export interface HostGameStateMessage {
  * These include both server-originated messages and relayed host messages.
  */
 export type ServerMessage =
+  | import("../src/session/protocol").SessionServerMessage
   | WelcomeMessage
   | LobbyStateMessage
   | GameStateMessage
@@ -308,6 +311,7 @@ export interface ErrorMessage {
 /** Game has started - no more joins allowed */
 export interface GameStartedMessage {
   type: 'GAME_STARTED';
+  gameId: string;
   turnOrder: string[];
 }
 
@@ -329,6 +333,8 @@ export interface RelayedGameActionMessage {
  * This is the public view of the room before game starts.
  */
 export interface LobbyState {
+  gameStarted: boolean;
+  gameId?: string;
   /** Room code for sharing */
   roomCode: string;
 

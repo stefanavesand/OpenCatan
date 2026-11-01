@@ -142,8 +142,9 @@ export const SetupHighlights: React.FC<SetupHighlightsProps> = ({
 
     return validRoads.map((edge) => {
       // Use the same edge position calculation as Edge.tsx
-      const position = getEdgePosition(edge.hex, edge.direction, hexSize);
-      const rotation = getEdgeRotation(edge.direction);
+      const direction = edge.direction as 'NE' | 'E' | 'SE';
+      const position = getEdgePosition(edge.hex, direction, hexSize);
+      const rotation = getEdgeRotation(direction);
       const key = edgeToKey(edge);
 
       return (

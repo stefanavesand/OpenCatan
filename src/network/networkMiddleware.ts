@@ -80,7 +80,7 @@ interface NetworkAction extends AnyAction {
 /**
  * Network middleware that intercepts game actions and routes them appropriately
  */
-export const networkMiddleware: Middleware<{}, RootState, Dispatch<AnyAction>> =
+export const networkMiddleware: Middleware =
   (storeApi: MiddlewareAPI<Dispatch<AnyAction>, RootState>) =>
   (next: Dispatch<AnyAction>) =>
   (action: NetworkAction) => {
@@ -133,16 +133,12 @@ function handleHostAction(
   isNetworkAction: boolean,
   isLocalFirstAction: boolean
 ): unknown {
-  // Process the action locally first
+  if (isNetworkAction) {
+    const gameAction = convertToGameAction(action, storeApi.getState());
+    return gameAction ? hostManager.handleAction(storeApi.getState().lobby.localPlayerId ?? '', gameAction) : undefined;
+  }
   const result = next(action);
 
-  if (isNetworkAction) {
-    // Update the host's game state from Redux
-    hostManager.updateStateFromRedux();
-
-    // Broadcast the updated state to all peers
-    hostManager.broadcastState();
-  }
 
   // Host also needs to send lobby actions to the server
   // so the server can broadcast updated lobby state to all players

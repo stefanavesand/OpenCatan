@@ -74,6 +74,7 @@ export function RoomPage() {
   const [roomState, setRoomState] = useState<RoomState>('validating');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasAttemptedJoin, setHasAttemptedJoin] = useState(false);
+  const joinInFlight = useRef(false);
 
   // Validate room code format
   const normalizedCode = code?.toUpperCase() || '';
@@ -96,6 +97,7 @@ export function RoomPage() {
       dispatch(resetPlayers());
       setRoomState('validating');
       setHasAttemptedJoin(false);
+      joinInFlight.current = false;
       setErrorMessage(null);
 
       prevRoomCodeRef.current = normalizedCode;
@@ -122,7 +124,8 @@ export function RoomPage() {
     }
 
     // If not connected and not attempting to join yet, try to join
-    if (!isConnected && !isConnecting && !hasAttemptedJoin) {
+    if (!isConnected && !isConnecting && !hasAttemptedJoin && !joinInFlight.current) {
+      joinInFlight.current = true;
       setHasAttemptedJoin(true);
       setRoomState('joining');
 

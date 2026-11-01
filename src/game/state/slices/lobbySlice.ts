@@ -249,9 +249,6 @@ const lobbySlice = createSlice({
      */
     setErrorMessage: (state, action: PayloadAction<string | null>) => {
       state.errorMessage = action.payload;
-      if (action.payload) {
-        state.connectionStatus = 'error';
-      }
     },
 
     /**

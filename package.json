@@ -14,7 +14,9 @@
     "test:coverage": "vitest run --coverage",
     "party:dev": "npx partykit dev",
     "party:deploy": "npx partykit deploy",
-    "deploy": "npm run party:deploy && npm run build"
+    "deploy": "npm run party:deploy && npm run build",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.5.0",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.64.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@types/node": "^24.10.4",

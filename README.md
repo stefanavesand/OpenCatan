@@ -7,16 +7,28 @@
 
 A free, open-source web implementation of Settlers of Catan with real-time multiplayer.
 
+## Development status and end-to-end testing
+
+The base-game two-player setup flow now has a real-browser test. Other gameplay features remain prototypes and have not been verified as complete. See [the test guide](docs/SESSION_E2E.md) for automated and manual testing, scope and limitations, and [follow-up work](docs/FOLLOW_UPS.md).
+
+```bash
+npm ci
+npx playwright install chromium
+npm run test:e2e
+```
+
+The test starts its own local frontend and PartyKit servers. No deployment or login is needed. Offline caching and saved-game recovery are not implemented yet.
+
 ## Overview
 
-OpenCatan brings the classic board game to your browser. Play with 2-4 friends in real-time using shareable room codes. Features complete base game rules, trading systems, development cards, and all the mechanics you know from the tabletop version.
+OpenCatan brings the classic board game to your browser. Play with 2-4 friends in real-time using shareable room codes. Includes base-game rule implementations, trading and development cards; automated browser verification currently covers setup.
 
 Built with a host-authority architecture where one player's browser validates all game actions, reducing server complexity while maintaining game integrity.
 
 ## Features
 
 ### Gameplay
-- **Full Catan Rules** - Complete base game implementation
+- **Base Catan Mechanics** - Prototype rule implementation; see verified test scope above
 - **Real-time Multiplayer** - 2-4 players via room codes
 - **Trading System** - Player-to-player and bank/port trading
 - **Development Cards** - Knight, Road Building, Year of Plenty, Monopoly, Victory Point
@@ -43,7 +55,7 @@ Built with a host-authority architecture where one player's browser validates al
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22.12+ (verified with Node.js 24.19.0)
 - npm or yarn
 
 ### Installation
@@ -153,8 +165,9 @@ First player to reach 10 victory points wins.
 ### Host-Authority Model
 - One player's browser (host) validates all game actions
 - PartyKit server only relays messages
-- Automatic host migration if host disconnects
-- Optimistic updates with rollback on rejection
+- Fixed host during a running game; host loss pauses progress
+- Versioned commands, targeted player views and in-memory duplicate-command receipts
+- Full recovery after host reload is pending
 
 ## License
 

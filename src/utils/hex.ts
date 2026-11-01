@@ -559,11 +559,11 @@ export function getEdgeVertices(edge: EdgeCoord): [VertexCoord, VertexCoord] {
     case 'E':
       return [
         { hex: { q: hex.q + 1, r: hex.r - 1 }, direction: 'S' },
-        { hex: { q: hex.q + 1, r: hex.r }, direction: 'N' },
+        { hex: { q: hex.q, r: hex.r + 1 }, direction: 'N' },
       ];
     case 'SE':
       return [
-        { hex: { q: hex.q + 1, r: hex.r }, direction: 'N' },
+        { hex: { q: hex.q, r: hex.r + 1 }, direction: 'N' },
         { hex, direction: 'S' },
       ];
     default:
@@ -583,7 +583,7 @@ export function getVertexEdges(vertex: VertexCoord): EdgeCoord[] {
   if (direction === 'N') {
     return [
       { hex, direction: 'NE' },
-      { hex: { q: hex.q - 1, r: hex.r }, direction: 'E' },
+      { hex: { q: hex.q, r: hex.r - 1 }, direction: 'E' },
       { hex: { q: hex.q, r: hex.r - 1 }, direction: 'SE' },
     ];
   } else {

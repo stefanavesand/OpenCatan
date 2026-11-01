@@ -1,11 +1,10 @@
-// @ts-nocheck
-// TODO: Fix TypeScript errors in this file
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import { selectBuildings } from '@/game/state/slices/boardSlice';
 import { selectPlayers, selectTurnOrder } from '@/game/state/slices/playersSlice';
 import { selectCurrentPlayerId, selectLongestRoad, selectLargestArmy } from '@/game/state/slices/gameSlice';
 import { selectLocalPlayerId } from '@/game/state/slices/lobbySlice';
-import { PlayerCard, PlayerData } from './PlayerCard';
+import { PlayerCard } from './PlayerCard';
 import styles from './panels.module.css';
 
 interface PlayerPanelListProps {
@@ -23,6 +22,7 @@ interface PlayerPanelListProps {
  */
 export const PlayerPanelList: React.FC<PlayerPanelListProps> = ({ className }) => {
   const players = useSelector(selectPlayers);
+  const buildings = useSelector(selectBuildings);
   const turnOrder = useSelector(selectTurnOrder);
   const currentPlayerId = useSelector(selectCurrentPlayerId);
   const localPlayerId = useSelector(selectLocalPlayerId);
@@ -49,8 +49,8 @@ export const PlayerPanelList: React.FC<PlayerPanelListProps> = ({ className }) =
 
     // Transform to PlayerData format
     const allPlayerData = orderedPlayers.map((player) => {
-      const resourceCount = Object.values(player.resources || {}).reduce((sum, count) => sum + count, 0);
-      const devCardCount = player.developmentCards?.length || 0;
+      const resourceCount = player.resourceCount ?? Object.values(player.resources || {}).reduce((sum, count) => sum + count, 0);
+      const devCardCount = player.devCardCount ?? player.developmentCards?.filter(card => !card.isPlayed).length ?? 0;
 
       return {
         id: player.id,
@@ -58,7 +58,8 @@ export const PlayerPanelList: React.FC<PlayerPanelListProps> = ({ className }) =
         color: player.color,
         isConnected: player.isConnected,
         isHost: player.isHost,
-        victoryPoints: calculateVisibleVP(player, longestRoad?.playerId, largestArmy?.playerId),
+        victoryPoints: buildings.filter(b => b.playerId === player.id).reduce((total, b) => total + (b.type === 'city' ? 2 : 1), 0)
+          + (longestRoad?.playerId === player.id ? 2 : 0) + (largestArmy?.playerId === player.id ? 2 : 0),
         resourceCount,
         devCardCount,
         longestRoadLength: player.longestRoadLength,
@@ -77,7 +78,7 @@ export const PlayerPanelList: React.FC<PlayerPanelListProps> = ({ className }) =
     const others = allPlayerData.filter((p) => p.id !== localPlayerId);
 
     return { otherPlayers: others, localPlayer: local };
-  }, [players, turnOrder, localPlayerId, longestRoad, largestArmy]);
+  }, [players, turnOrder, localPlayerId, longestRoad, largestArmy, buildings]);
 
   return (
     <div className={`${styles.playerPanelListVertical} ${className || ''}`}>
@@ -107,38 +108,5 @@ export const PlayerPanelList: React.FC<PlayerPanelListProps> = ({ className }) =
     </div>
   );
 };
-
-/**
- * Calculate visible victory points for a player
- * (excludes hidden VP from development cards)
- */
-function calculateVisibleVP(
-  player: {
-    id: string;
-    developmentCards: Array<{ type: string; isPlayed: boolean }>;
-    longestRoadLength: number;
-    armySize: number;
-  },
-  longestRoadHolderId: string | undefined,
-  largestArmyHolderId: string | undefined
-): number {
-  // This is a simplified calculation
-  // In a real implementation, this would come from the game state
-  // based on buildings placed on the board
-  let vp = 0;
-
-  // Add VP for achievements
-  if (longestRoadHolderId === player.id) vp += 2;
-  if (largestArmyHolderId === player.id) vp += 2;
-
-  // Add VP from revealed victory point cards (not typically shown until game end)
-  // but we count them here for the owner only
-  const vpCards = (player.developmentCards || []).filter(
-    (c) => c.type === 'victoryPoint' || c.type === 'victory-point'
-  ).length;
-  vp += vpCards;
-
-  return vp;
-}
 
 export default PlayerPanelList;

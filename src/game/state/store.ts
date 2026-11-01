@@ -12,7 +12,7 @@
  * - log: Game log and chat messages
  */
 
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, combineReducers, type UnknownAction } from '@reduxjs/toolkit';
 
 // Import reducers
 import gameReducer from './slices/gameSlice';
@@ -30,17 +30,20 @@ import { networkMiddleware } from '@/network/networkMiddleware';
 /**
  * Configure and create the Redux store
  */
+const combinedReducer = combineReducers({
+  game: gameReducer, board: boardReducer, players: playersReducer, lobby: lobbyReducer,
+  ui: uiReducer, log: logReducer, stats: statsReducer, trade: tradeReducer,
+});
+export type RootState = ReturnType<typeof combinedReducer>;
+const reducer = (state: RootState | undefined, action: UnknownAction): RootState => {
+  if (state && action.type === 'session/applyView') {
+    const view = action.payload as import('@/session/protocol').SessionView;
+    return { ...state, ...view };
+  }
+  return combinedReducer(state, action);
+};
 export const store = configureStore({
-  reducer: {
-    game: gameReducer,
-    board: boardReducer,
-    players: playersReducer,
-    lobby: lobbyReducer,
-    ui: uiReducer,
-    log: logReducer,
-    stats: statsReducer,
-    trade: tradeReducer,
-  },
+  reducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       // Enable serializable check in development
@@ -55,11 +58,6 @@ export const store = configureStore({
     }).concat(networkMiddleware),
   devTools: process.env.NODE_ENV !== 'production',
 });
-
-/**
- * Infer the `RootState` type from the store itself
- */
-export type RootState = ReturnType<typeof store.getState>;
 
 /**
  * Infer the `AppDispatch` type from the store itself

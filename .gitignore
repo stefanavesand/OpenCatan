@@ -29,3 +29,7 @@ drive-download-*/
 
 # PartyKit local state
 .partykit/
+
+# Browser test artifacts
+playwright-report/
+test-results/

@@ -16,7 +16,7 @@ import { hostManager } from '../hostManager';
 import { peerManager } from '../peerManager';
 import { store, type RootState, type AppDispatch } from '@/game/state/store';
 import type { LobbyPlayer, LobbyState } from '@/types/network';
-import type { GameSettings, PlayerColor } from '@/types/game';
+import type { GameSettings } from '@/types/game';
 import {
   setRoomCode,
   setLocalPlayerId,
@@ -32,7 +32,6 @@ import {
 } from '@/game/state/slices/lobbySlice';
 import { generateRoomCode } from '../constants';
 import { getSessionData, canReconnect as checkCanReconnect } from '../session';
-import { DEFAULT_GAME_SETTINGS } from '@/types/game';
 
 // ============================================================================
 // Types
@@ -112,8 +111,13 @@ export function usePartyConnection(): UsePartyConnectionReturn {
   // ==========================================================================
 
   useEffect(() => {
+    const cleanups: Array<() => void> = [];
+    const subscribe = (type: string, handler: (message: any) => void) => {
+      partyClient.on(type as any, handler);
+      cleanups.push(() => partyClient.off(type, handler));
+    };
     // Handle connection state changes
-    partyClient.on('CONNECTION_STATE_CHANGE' as any, (data: any) => {
+    subscribe('CONNECTION_STATE_CHANGE' as any, (data: any) => {
       setConnectionState(data.state);
       dispatch(setConnectionStatus(
         data.state === 'connected' ? 'connected' :
@@ -123,7 +127,7 @@ export function usePartyConnection(): UsePartyConnectionReturn {
     });
 
     // Handle lobby state updates
-    partyClient.on('LOBBY_STATE', (message) => {
+    subscribe('LOBBY_STATE', (message) => {
       if ('state' in message) {
         setLocalLobbyState(message.state);
 
@@ -156,25 +160,26 @@ export function usePartyConnection(): UsePartyConnectionReturn {
           },
           gameStarted: preserveGameStarted,
         }));
+        if (message.state.gameId && !partyClient.isHost) peerManager.begin(message.state.gameId);
       }
     });
 
     // Handle player joined
-    partyClient.on('PLAYER_JOINED', (message) => {
+    subscribe('PLAYER_JOINED', (message) => {
       if ('player' in message) {
         dispatch(addPlayer(message.player));
       }
     });
 
     // Handle player left
-    partyClient.on('PLAYER_LEFT', (message) => {
+    subscribe('PLAYER_LEFT', (message) => {
       if ('playerId' in message) {
         dispatch(removePlayer(message.playerId));
       }
     });
 
     // Handle player updated
-    partyClient.on('PLAYER_UPDATED', (message) => {
+    subscribe('PLAYER_UPDATED', (message) => {
       if ('player' in message) {
         dispatch(updatePlayer({
           playerId: message.player.id,
@@ -184,36 +189,29 @@ export function usePartyConnection(): UsePartyConnectionReturn {
     });
 
     // Handle host migration
-    partyClient.on('HOST_MIGRATED', (message) => {
+    subscribe('HOST_MIGRATED', (message) => {
       if ('newHostId' in message) {
         dispatch(transferHost(message.newHostId));
       }
     });
 
     // Handle errors
-    partyClient.on('ERROR', (message) => {
+    subscribe('ERROR', (message) => {
       if ('message' in message) {
         dispatch(setErrorMessage(message.message));
       }
     });
 
     // Handle game started
-    partyClient.on('GAME_STARTED', (message) => {
-      console.log('Game started!', message);
-      // Set lobby as started, then dispatch game initialization
+    subscribe('GAME_STARTED', (message) => {
+      if (partyClient.isHost) hostManager.startGame(message.gameId, message.turnOrder);
+      else peerManager.begin(message.gameId);
       dispatch({ type: 'lobby/startGame' });
-
-      // Get turn order from message
-      const turnOrder = 'turnOrder' in message ? (message.turnOrder as string[]) : [];
-      if (turnOrder.length > 0) {
-        // Initialize game state - this will be done via a separate action
-        dispatch({ type: 'game/initFromLobby', payload: { turnOrder } });
-      }
     });
 
     // Cleanup
     return () => {
-      partyClient.offAll();
+      cleanups.forEach(cleanup => cleanup());
     };
   }, [dispatch]);
 
@@ -239,26 +237,7 @@ export function usePartyConnection(): UsePartyConnectionReturn {
 
       // Initialize as host
       const playerId = partyClient.playerId || '';
-      const hostPlayer: LobbyPlayer = {
-        id: playerId,
-        name: playerName,
-        color: 'red' as PlayerColor,
-        isReady: false,
-        isHost: true,
-        isConnected: true,
-        joinedAt: Date.now(),
-      };
-
-      dispatch(setLocalPlayer({ playerId, isHost: true }));
-      dispatch(addPlayer(hostPlayer));
-
-      // Initialize host manager with initial state
-      const fullSettings: GameSettings = {
-        ...DEFAULT_GAME_SETTINGS,
-        ...settings,
-      };
-
-      hostManager.initializeLobby(newRoomCode, hostPlayer, fullSettings);
+      dispatch(setLocalPlayer({ playerId, isHost: partyClient.isHost }));
 
       dispatch(setConnectionStatus('connected'));
 
@@ -284,7 +263,7 @@ export function usePartyConnection(): UsePartyConnectionReturn {
       await partyClient.connect(roomCode, playerName);
 
       const playerId = partyClient.playerId || '';
-      dispatch(setLocalPlayer({ playerId, isHost: false }));
+      dispatch(setLocalPlayer({ playerId, isHost: partyClient.isHost }));
       dispatch(setConnectionStatus('connected'));
     } catch (error) {
       dispatch(setConnectionStatus('error'));

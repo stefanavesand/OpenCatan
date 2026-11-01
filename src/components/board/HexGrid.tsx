@@ -153,7 +153,7 @@ export const HexGrid: React.FC<HexGridProps> = ({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   // Touch state for pinch-to-zoom
-  const [touches, setTouches] = useState<TouchList | null>(null);
+  const [touches, setTouches] = useState<React.TouchList | null>(null);
   const [lastPinchDistance, setLastPinchDistance] = useState<number | null>(null);
 
   // Calculate viewBox dimensions

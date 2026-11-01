@@ -28,12 +28,9 @@ import { useAppSelector, useAppDispatch } from '@/hooks';
 import { useGamePhase, useGameBoard, useRoomCode, useGameNavigation, useSetupPhase, useGameSounds, useTradeRates } from '@/hooks';
 import { usePartyConnection } from '@/network/hooks';
 import { useGameActions } from '@/network/hooks/useGameActions';
-import { hostManager } from '@/network/hostManager';
-import { partyClient } from '@/network/partyClient';
 import { useRobberPhase } from '@/hooks/useRobberPhase';
 import { useDevCards } from '@/hooks/useDevCards';
 import { useVictory } from '@/hooks/useVictory';
-import { generateBeginnerBoard } from '@/utils/boardGenerator';
 
 // Game state selectors
 import {
@@ -51,8 +48,6 @@ import {
   selectLog,
   selectPendingDiscard,
   selectGameSettings,
-  selectLobbyPlayers,
-  selectLobbySettings,
   selectIsHost,
   // UI state
   selectBuildMode,
@@ -70,12 +65,6 @@ import {
   setFullscreen,
   addToast,
   // Game initialization
-  startGame,
-  setTiles,
-  setPorts,
-  setPlayers,
-  setTurnOrder,
-  setSetupState,
   // Timer
   tickTimer,
   // Trade state
@@ -216,6 +205,7 @@ export function GamePage() {
 
   // Redux state
   const connectionStatus = useAppSelector(selectConnectionStatus);
+  const sessionError = useAppSelector(state => state.lobby.errorMessage);
   const gameStarted = useAppSelector(selectGameStarted);
   const players = useAppSelector(selectPlayers);
   const bank = useAppSelector(selectBank);
@@ -234,158 +224,10 @@ export function GamePage() {
   const activeCounterOffer = useAppSelector(selectActiveCounterOffer);
 
   // Lobby state for initialization
-  const lobbyPlayers = useAppSelector(selectLobbyPlayers);
-  const lobbySettings = useAppSelector(selectLobbySettings);
   const isHost = useAppSelector(selectIsHost);
 
-  // Initialize game when gameStarted becomes true but game state is not set up
-  // Only the HOST should generate the board and initialize the game state
-  // Peers will receive the game state via GAME_STATE messages
-  const [gameInitialized, setGameInitialized] = useState(false);
-  useEffect(() => {
-    if (gameStarted && phase === 'lobby' && !gameInitialized && lobbyPlayers && lobbyPlayers.length > 0) {
-      // Both host and peers need to initialize their local state
-      // But only the host generates the board - peers will receive it via broadcast
-      console.log(`Initializing game state from lobby data... (isHost: ${isHost})`);
-
-      // Convert lobby settings to game settings
-      const gameSettings = {
-        mode: lobbySettings?.mode || 'base',
-        playerCount: lobbySettings?.playerCount || 4,
-        victoryPoints: lobbySettings?.victoryPoints || 10,
-        turnTimer: lobbySettings?.turnTimer || 90,
-        discardLimit: lobbySettings?.discardLimit || 7,
-        map: lobbySettings?.mapType || 'random',
-        friendlyRobber: lobbySettings?.friendlyRobber || false,
-      };
-
-      // Convert lobby players to game players
-      const gamePlayers = lobbyPlayers.map((lp) => ({
-        id: lp.id,
-        name: lp.name,
-        color: lp.color,
-        isHost: lp.isHost,
-        isConnected: lp.isConnected,
-        victoryPoints: 0,
-        resources: { brick: 0, lumber: 0, ore: 0, grain: 0, wool: 0 },
-        commodities: undefined,
-        developmentCards: [],
-        progressCards: undefined,
-        hasPlayedDevCard: false,
-        devCardsBoughtThisTurn: [],
-        roadsRemaining: 15,
-        settlementsRemaining: 5,
-        citiesRemaining: 4,
-        shipsRemaining: 0,
-        cityWallsRemaining: 0,
-        knightsRemaining: 0,
-        longestRoadLength: 0,
-        armySize: 0,
-        cityImprovements: undefined,
-        totalResourcesCollected: 0,
-        totalTradesMade: 0,
-        timesRobbed: 0,
-        timesWasRobbed: 0,
-      }));
-
-      try {
-        // Generate the board - using beginnerBoard for consistent layout across all clients
-        // This ensures all players see the same board without needing network sync
-        // TODO: In production, host should broadcast board to peers for random boards
-        const tiles = generateBeginnerBoard();
-        if (!tiles) {
-          throw new Error('Failed to generate board');
-        }
-
-        // Convert tiles to the format expected by Redux (add missing properties)
-        const hexTiles = tiles.map((t) => ({
-          ...t,
-          hasPirate: false,
-          isFog: false,
-        }));
-
-        // Use a consistent turn order - the server sent this in GAME_STARTED
-        // For now, sort by join order (host first) for consistency
-        const playerIds = gamePlayers.map(p => p.id);
-        // Sort deterministically - players are already sorted by join order from server
-        const turnOrder = [...playerIds];
-
-        // Ensure localPlayerId is set for local testing
-        // If not set, default to the first player (host)
-        if (!localPlayerId && turnOrder.length > 0) {
-          dispatch({ type: 'lobby/setLocalPlayerId', payload: turnOrder[0] });
-        }
-
-        // Dispatch actions to set up the game
-        dispatch(startGame({
-          settings: gameSettings as any,
-          firstPlayerId: turnOrder[0],
-        }));
-
-        dispatch(setTiles(hexTiles));
-        dispatch(setPorts([])); // TODO: Generate ports
-        dispatch(setPlayers(gamePlayers as any));
-        dispatch(setTurnOrder(turnOrder));
-
-        // Initialize setup state
-        const playerPlacements: Record<string, any> = {};
-        turnOrder.forEach((pid) => {
-          playerPlacements[pid] = { settlement1: null, road1: null, settlement2: null, road2: null };
-        });
-        dispatch(setSetupState({
-          currentPlacementIndex: 0,
-          lastPlacedSettlement: null,
-          placementsComplete: false,
-          playerPlacements,
-        }));
-
-        // Initialize the host manager for state management
-        // For local testing without network, we act as the host
-        const shouldBeHost = isHost || !partyClient.isConnected;
-        if (shouldBeHost) {
-          console.log(`Initializing as host (isHost: ${isHost}, connected: ${partyClient.isConnected})`);
-          // Create a minimal initial game state for the host manager
-          const initialGameState = {
-            roomCode: roomCode || 'local',
-            mode: gameSettings.mode,
-            settings: gameSettings,
-            version: 0,
-            lastUpdated: Date.now(),
-            phase: 'setup-settlement-1' as const,
-            turn: 0,
-            currentPlayerId: turnOrder[0],
-            turnTimeRemaining: gameSettings.turnTimer || 90,
-            turnStartedAt: Date.now(),
-            tiles: hexTiles,
-            buildings: [],
-            roads: [],
-            ports: [],
-            knights: [],
-            players: gamePlayers,
-            turnOrder: turnOrder,
-            playersNeedingToDiscard: [],
-            discardAmounts: {},
-            robberLocation: hexTiles.find(t => t.terrain === 'desert')?.coord || { q: 0, r: 0 },
-            pirateLocation: null,
-            developmentDeck: [],
-            developmentDeckCount: 25,
-            bank: { brick: 19, lumber: 19, ore: 19, grain: 19, wool: 19 },
-            longestRoad: null,
-            largestArmy: null,
-            activeOffers: [],
-            log: [],
-            chat: [],
-          };
-          hostManager.initializeAsHost(initialGameState as any);
-        }
-
-        setGameInitialized(true);
-        console.log('Game initialized successfully!', { turnOrder, tiles: hexTiles.length, isHost });
-      } catch (error) {
-        console.error('Failed to initialize game:', error);
-      }
-    }
-  }, [gameStarted, phase, gameInitialized, lobbyPlayers, lobbySettings, isHost, dispatch]);
+  // The host creates the board once; peers wait for a complete recipient view.
+  const gameInitialized = phase !== 'lobby';
 
   // Timer tick effect - decrement timer every second during active game
   useEffect(() => {
@@ -394,7 +236,7 @@ export function GamePage() {
     // 2. We're not in the lobby phase
     // 3. Turn timer is enabled (> 0)
     const timerEnabled = settings.turnTimer && settings.turnTimer > 0;
-    const shouldTick = gameStarted && gameInitialized && phase !== 'lobby' && phase !== 'ended' && timerEnabled;
+    const shouldTick = isHost && gameStarted && gameInitialized && phase !== 'lobby' && phase !== 'ended' && timerEnabled;
 
     if (!shouldTick) return;
 
@@ -403,7 +245,7 @@ export function GamePage() {
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [gameStarted, gameInitialized, phase, settings.turnTimer, dispatch]);
+  }, [isHost, gameStarted, gameInitialized, phase, settings.turnTimer, dispatch]);
 
   // Local state
   const [showBuildMenu, setShowBuildMenu] = useState(false);
@@ -445,24 +287,6 @@ export function GamePage() {
     if (!players || !Array.isArray(players)) return [];
     return players.filter(p => p.id !== localPlayerId && p.isConnected);
   }, [players, localPlayerId]);
-
-  // Player data for panels
-  const playerPanelData = useMemo(() => {
-    if (!players || !Array.isArray(players)) return [];
-    return players.map(p => ({
-      id: p.id,
-      name: p.name,
-      color: p.color,
-      victoryPoints: p.victoryPoints || 0,
-      resourceCount: Object.values(p.resources).reduce((sum, val) => sum + val, 0),
-      devCardCount: p.developmentCards?.length || 0,
-      knightCount: p.armySize || 0,
-      longestRoadLength: p.longestRoadLength || 0,
-      isConnected: p.isConnected,
-      hasLongestRoad: longestRoad?.playerId === p.id,
-      hasLargestArmy: largestArmy?.playerId === p.id,
-    }));
-  }, [players, longestRoad, largestArmy]);
 
   // Handlers
   const handleAction = useCallback((action: 'build' | 'trade' | 'buyDevCard' | 'endTurn' | 'rollDice' | 'cancelAction') => {
@@ -608,8 +432,11 @@ export function GamePage() {
 
   return (
     <GameContainer>
-      <div className={styles.gamePage}>
+      <div className={styles.gamePage} data-testid="game-state" data-phase={phase}
+        data-current-player={currentPlayerId} data-local-player={localPlayerId}
+        data-buildings={buildings.length} data-roads={roads.length}>
 
+        {sessionError && <p role="alert">{sessionError}</p>}
         {/* Main content area */}
         <main className={styles.mainArea}>
           {/* Game board container */}
@@ -814,11 +641,7 @@ export function GamePage() {
 
           {/* Players area - moved from sidebar */}
           <div className={styles.playersArea}>
-            <PlayerPanelList
-              players={playerPanelData}
-              currentPlayerId={currentPlayerId}
-              localPlayerId={localPlayerId}
-            />
+            <PlayerPanelList />
           </div>
         </footer>
 

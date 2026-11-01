@@ -13,6 +13,8 @@ import type { GameState, GameAction, GameSettings, LogEntry, ChatMessage } from 
  * State of the game lobby before game starts
  */
 export interface LobbyState {
+  gameStarted?: boolean;
+  gameId?: string;
   /** Room code for this lobby */
   roomCode: string;
   /** Current game settings */
@@ -168,6 +170,7 @@ export interface NetworkChatMessage extends ChatMessage {
  * Messages sent from client to the game
  */
 export type ClientMessage =
+  | import("../session/protocol").SessionClientMessage
   // Lobby actions
   | {
       type: 'JOIN_ROOM';
@@ -222,6 +225,7 @@ export type ClientMessage =
  * Messages sent from host to clients
  */
 export type HostMessage =
+  | import("../session/protocol").SessionServerMessage
   // Lobby state
   | {
       type: 'LOBBY_STATE';
@@ -320,6 +324,8 @@ export type HostMessage =
   // Game events
   | {
       type: 'GAME_STARTED';
+      gameId: string;
+      turnOrder: string[];
     }
   | {
       type: 'GAME_ENDED';
@@ -333,6 +339,7 @@ export type HostMessage =
  * Internal messages handled by PartyKit server
  */
 export type ServerMessage =
+  | { type: 'WELCOME'; playerId: string; sessionToken: string; roomCode: string; isHost: boolean }
   | {
       type: 'ROOM_CREATED';
       roomCode: string;
