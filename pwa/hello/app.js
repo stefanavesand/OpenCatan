@@ -9,19 +9,19 @@ let registration;
 let reloadForUpdate = false;
 
 function showNetwork() {
-  document.querySelector('#network').textContent = navigator.onLine ? 'Nätanslutning finns' : 'Ingen nätanslutning';
+  document.querySelector('#network').textContent = navigator.onLine ? 'Network available' : 'No network connection';
 }
 function showDisplay() {
   const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  document.querySelector('#display').textContent = standalone ? 'Installerad webbapp' : 'Webbläsare';
+  document.querySelector('#display').textContent = standalone ? 'Installed web app' : 'Browser';
 }
 function talk(worker, type) {
   return new Promise((resolve, reject) => {
     const channel = new MessageChannel();
-    const timer = setTimeout(() => { channel.port1.close(); reject(new Error('Kontrollen tog för lång tid. Försök igen.')); }, 20000);
+    const timer = setTimeout(() => { channel.port1.close(); reject(new Error('The check timed out. Please try again.')); }, 20000);
     channel.port1.onmessage = event => {
       clearTimeout(timer); channel.port1.close();
-      if (event.data.buildId !== BUILD_ID) reject(new Error('Appversionen har ändrats. Installera uppdateringen eller öppna appen igen.'));
+      if (event.data.buildId !== BUILD_ID) reject(new Error('The app version has changed. Install the update or reopen the app.'));
       else resolve(event.data);
     };
     worker.postMessage({ type }, [channel.port2]);
@@ -29,24 +29,24 @@ function talk(worker, type) {
 }
 async function verify(repair = false) {
   check.disabled = true;
-  offline.textContent = 'Kontrollerar filerna…'; offline.className = 'pending';
+  offline.textContent = 'Checking files…'; offline.className = 'pending';
   try {
-    const ready = await Promise.race([navigator.serviceWorker.ready, new Promise((_, reject) => setTimeout(() => reject(new Error('Offlinepaketet kunde inte installeras. Anslut nätet och ladda om sidan.')), 20000))]);
+    const ready = await Promise.race([navigator.serviceWorker.ready, new Promise((_, reject) => setTimeout(() => reject(new Error('The offline package could not be installed. Connect to the internet and reload the page.')), 20000))]);
     const result = await talk(ready.active, repair ? 'REPAIR_OFFLINE' : 'CHECK_OFFLINE');
-    if (!result.ok) throw new Error(result.error || 'Offlinepaketet är inte komplett. Anslut nätet och tryck på kontrollknappen.');
-    offline.textContent = 'Klart för offline'; offline.className = 'ready';
-    detail.textContent = 'Alla appfiler är hämtade och kontrollerade. Du kan nu testa att stänga appen och starta den utan nät.';
+    if (!result.ok) throw new Error(result.error || 'The offline package is incomplete. Connect to the internet and press the check button.');
+    offline.textContent = 'Ready for offline'; offline.className = 'ready';
+    detail.textContent = 'All app files have been downloaded and checked. You can now close the app and reopen it offline.';
   } catch (error) {
-    offline.textContent = 'Inte klart för offline'; offline.className = 'pending'; detail.textContent = error.message;
+    offline.textContent = 'Not ready for offline'; offline.className = 'pending'; detail.textContent = error.message;
   } finally { check.disabled = false; }
 }
 function offerUpdate() {
   update.hidden = !registration?.waiting;
-  if (registration?.waiting) detail.textContent = 'En ny version är hämtad. Tryck på Installera uppdatering när du vill byta version.';
+  if (registration?.waiting) detail.textContent = 'A new version has been downloaded. Press Install update when you are ready to switch.';
 }
 async function start() {
   if (!('serviceWorker' in navigator)) {
-    offline.textContent = 'Offline stöds inte här'; detail.textContent = 'Öppna appen i Safari via HTTPS.'; check.disabled = true; return;
+    offline.textContent = 'Offline mode is not supported here'; detail.textContent = 'Open the app in Safari over HTTPS.'; check.disabled = true; return;
   }
   try {
     registration = await navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' });
@@ -55,15 +55,15 @@ async function start() {
       installing?.addEventListener('statechange', () => {
         if (installing.state === 'installed') offerUpdate();
         if (installing.state === 'redundant' && !registration.active) {
-          offline.textContent = 'Inte klart för offline';
-          detail.textContent = 'Hämtningen kunde inte slutföras. Anslut nätet och försök igen.';
+          offline.textContent = 'Not ready for offline';
+          detail.textContent = 'The download could not be completed. Connect to the internet and try again.';
         }
       });
     });
     await verify(); offerUpdate();
     registration.update().catch(() => { /* A previously verified offline build stays usable. */ });
   } catch {
-    offline.textContent = 'Inte klart för offline'; detail.textContent = 'Hämtningen kunde inte starta. Kontrollera nätet och ladda om sidan.';
+    offline.textContent = 'Not ready for offline'; detail.textContent = 'The download could not start. Check your connection and reload the page.';
   }
 }
 check.addEventListener('click', () => verify(true));

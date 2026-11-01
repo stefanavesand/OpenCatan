@@ -13,10 +13,12 @@ Local tracking for this implementation. The repository requests the `bd` CLI in 
 
 - GAMEPLAY-1: Extend the scenario-based progression tests to naturally generated complete games and four-player sessions. Expand road tie/branch and resource-shortage edge cases.
 
-- PWA-1 (verified): User confirmed Spelhyllan 1.1.0 game recovery on the actual iPad. Cache/update/IndexedDB recovery is also automated in Chromium. Future work includes standalone domain/session integration for OpenCatan, history, schema migrations and cross-device transport.
+- PWA-1 (verified): User confirmed Game Shelf 1.1.0 game recovery on the actual iPad. Cache/update/IndexedDB recovery is also automated in Chromium. Future work includes standalone domain/session integration for OpenCatan, history, schema migrations and cross-device transport.
 
 - ONLINE-1 (partly verified): User confirmed 1.2.0 online play on their devices. Separate physical networks and exact suspend/reopen scenarios remain to verify. Add room/user cleanup, abuse/rate/cost controls, identity recovery/linking, payload-bound dedup and future-schema validation. Replace duplicated SQL/TS rules before extending this backend to OpenCatan; managed transport choice remains replaceable.
 
-- DESIGN-1: Implement the PRD 3.0 / HLD 1.0 baseline incrementally in the reference game. Resolve ADR-01 (shared TypeScript authority runtime), ADR-02 (identity/invitation recovery), ADR-03 (rate limits, cost, retention and disaster recovery), ADR-04 (rules/rights). State charts and mapped test cases are target behavior, not completed implementation. See HLD implementation steps and PRD release gates.
+- DESIGN-1: Implement the PRD 3.1 / HLD 1.1 baseline incrementally in the reference game. Resolve ADR-01 (shared TypeScript authority runtime), ADR-02 (identity/invitation recovery), ADR-03 (rate limits, cost, retention and disaster recovery), ADR-04 (rules/rights). State charts and mapped test cases are target behavior, not completed implementation. See HLD implementation steps and PRD release gates.
 
 - SESSION-STATE-1 (client slice implemented): PWA 1.2.1 has pure connection/command state policy, stable transport failure codes, backoff/Retry-After and stops on blocked errors. See SESSION_STATES.md. Remaining: common runtime across games, backend payload-bound dedup/stable rejection receipts, durable/cross-tab cooldown, strict protocol/save validation and IndexedDB outbox. This does not close E1 or implement server rate limits.
+
+- LANGUAGE-1: English UI/repository policy is implemented in PWA 1.2.2. Preserve legacy storage keys, lock names and local route alias. See ENGLISH_RELEASE.md. Verify the installed English update on the actual iPad.

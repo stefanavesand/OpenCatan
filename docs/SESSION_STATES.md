@@ -22,3 +22,5 @@ This is the first implementation slice of [HLD §6–7](HLD.md), addressing PRD 
 This is a policy/session-client slice, not the full common session runtime. State-machine failure/backoff counters live in memory and reset on full reload; persisted pending intent does not. Client delay is not an abuse/security boundary. Server quotas must enforce cross-tab/reload limits; cross-tab auth/command locks already exist where Web Locks is supported, but a global cross-tab cooldown is not implemented. `Retry-After` needs an exposed CORS response header to be readable.
 
 The backend still needs payload-bound command IDs and stable stored rejection receipts. Unknown identity recovery, indexed session storage, full game lifecycle, authority snapshots, retention/cost controls, a shared online/local rule runtime, and private Catan projections remain open. The local and OpenCatan implementations have not been moved onto this state policy yet.
+
+The user subsequently confirmed version 1.2.1 works on their device.

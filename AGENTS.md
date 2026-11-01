@@ -1,5 +1,10 @@
 # Agent Instructions
 
+## Language
+
+All application UI, accessibility labels, errors, source comments, tests, documentation, commit messages and other maintained repository content must be in English. Swedish is permitted only in the conversation with the user. Preserve existing persisted identifiers and compatibility aliases when translating; do not rename storage keys or invalidate saved games just to change language.
+
+
 This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
 
 ## Quick Reference

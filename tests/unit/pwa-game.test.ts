@@ -9,12 +9,12 @@ describe('local three-in-a-row rules and recovery format', () => {
     const game = play([line[0], other[0], line[1], other[1], line[2]]);
     expect(position(game.moves).winner).toBe('X');
     expect(position(game.moves).line).toEqual(line);
-    expect(() => move(game, other[2], 1000)).toThrow('avslutat');
+    expect(() => move(game, other[2], 1000)).toThrow('ended');
   });
   it('detects a full-board draw and an O win', () => {
     const draw = play([0, 1, 2, 4, 3, 5, 7, 6, 8]);
     expect(position(draw.moves).draw).toBe(true);
-    expect(() => move(draw, 0, 1000)).toThrow('avslutat');
+    expect(() => move(draw, 0, 1000)).toThrow('ended');
     expect(position(play([0, 3, 1, 4, 8, 5]).moves).winner).toBe('O');
   });
   it('rejects an occupied or invalid cell without changing the input', () => {

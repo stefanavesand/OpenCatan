@@ -17,7 +17,7 @@ test('verified resources survive offline reload and a full browser restart at th
     let page = context.pages()[0];
     await page.goto(`${address}#hello`);
     await expect(page.getByRole('heading', { name: 'Hello world.' })).toBeVisible();
-    await expect(page.locator('#offline')).toHaveText('Klart för offline');
+    await expect(page.locator('#offline')).toHaveText('Ready for offline');
     const manifest = await (await page.request.get(new URL('manifest.webmanifest', address).href)).json();
     expect(manifest.display).toBe('standalone');
     expect(new URL(manifest.start_url, address).href).toBe(address);
@@ -31,14 +31,14 @@ test('verified resources survive offline reload and a full browser restart at th
     }
     await context.setOffline(true);
     await page.reload();
-    await expect(page.locator('#offline')).toHaveText('Klart för offline');
-    await expect(page.locator('#network')).toHaveText('Ingen nätanslutning');
+    await expect(page.locator('#offline')).toHaveText('Ready for offline');
+    await expect(page.locator('#network')).toHaveText('No network connection');
     await context.close();
     context = await chromium.launchPersistentContext(profile, { headless: true, offline: true, viewport: { width: 820, height: 1180 } });
     page = context.pages()[0];
     await page.goto(`${address}#hello`);
     await expect(page.getByRole('heading', { name: 'Hello world.' })).toBeVisible();
-    await expect(page.locator('#offline')).toHaveText('Klart för offline');
+    await expect(page.locator('#offline')).toHaveText('Ready for offline');
     await page.screenshot({ path: 'test-results/pwa-hello-offline.png', fullPage: true });
   } finally { await context.close(); }
 });
@@ -50,7 +50,7 @@ test('a corrupted first download never becomes ready for offline', async ({ brow
   try {
     const page = await context.newPage();
     await page.goto(`${address}#hello`);
-    await expect(page.locator('#offline')).toHaveText('Inte klart för offline', { timeout: 25000 });
+    await expect(page.locator('#offline')).toHaveText('Not ready for offline', { timeout: 25000 });
     const state = await page.evaluate(async () => {
       const registration = await navigator.serviceWorker.getRegistration();
       return { active: !!registration?.active, waiting: !!registration?.waiting, caches: await caches.keys() };
@@ -66,7 +66,7 @@ test('an incomplete update preserves v1; a verified update waits for the user an
   try {
     const page = await context.newPage();
     await page.goto(`${address}#hello`);
-    await expect(page.locator('#offline')).toHaveText('Klart för offline');
+    await expect(page.locator('#offline')).toHaveText('Ready for offline');
     await expect(page.locator('.version')).toHaveText(`v${initialVersion}`);
     build(nextVersion(1));
     await writeFile(cssPath, 'broken-update');
@@ -80,33 +80,33 @@ test('an incomplete update preserves v1; a verified update waits for the user an
     await context.setOffline(true);
     await page.reload();
     await expect(page.locator('.version')).toHaveText(`v${initialVersion}`);
-    await expect(page.locator('#offline')).toHaveText('Klart för offline');
+    await expect(page.locator('#offline')).toHaveText('Ready for offline');
     await context.setOffline(false);
     build(nextVersion(2));
     await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update(); });
-    await expect(page.getByRole('button', { name: 'Installera uppdatering', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Install update', exact: true })).toBeVisible();
     await expect(page.locator('.version')).toHaveText(`v${initialVersion}`);
-    await page.getByRole('button', { name: 'Installera uppdatering', exact: true }).click();
+    await page.getByRole('button', { name: 'Install update', exact: true }).click();
     await expect(page.locator('.version')).toHaveText(`v${nextVersion(2)}`);
-    await expect(page.locator('#offline')).toHaveText('Klart för offline');
+    await expect(page.locator('#offline')).toHaveText('Ready for offline');
     await context.setOffline(true);
     await page.reload();
     await expect(page.locator('.version')).toHaveText(`v${nextVersion(2)}`);
-    await expect(page.locator('#offline')).toHaveText('Klart för offline');
+    await expect(page.locator('#offline')).toHaveText('Ready for offline');
   } finally { await context.close(); build(); }
 });
 
 test('removed cached files clear readiness and can be repaired while online', async ({ page }) => {
   await page.goto(`${address}#hello`);
-  await expect(page.locator('#offline')).toHaveText('Klart för offline');
+  await expect(page.locator('#offline')).toHaveText('Ready for offline');
   await page.evaluate(async () => {
     const name = (await caches.keys()).find(k => k.startsWith('hello-pwa:'))!;
     await (await caches.open(name)).delete(new URL('./style.css', location.href).href);
   });
   await page.context().setOffline(true);
-  await page.getByRole('button', { name: 'Kontrollera offlinepaket', exact: true }).click();
-  await expect(page.locator('#offline')).toHaveText('Inte klart för offline');
+  await page.getByRole('button', { name: 'Check offline package', exact: true }).click();
+  await expect(page.locator('#offline')).toHaveText('Not ready for offline');
   await page.context().setOffline(false);
-  await page.getByRole('button', { name: 'Kontrollera offlinepaket', exact: true }).click();
-  await expect(page.locator('#offline')).toHaveText('Klart för offline');
+  await page.getByRole('button', { name: 'Check offline package', exact: true }).click();
+  await expect(page.locator('#offline')).toHaveText('Ready for offline');
 });

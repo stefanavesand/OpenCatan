@@ -1,23 +1,24 @@
-# Spelhyllan 1.1.0: local game and recovery
+# Game Shelf 1.1.0: local game and recovery
 
-The existing installed PWA now opens a small game library. Tre i rad (three-in-a-row / tic-tac-toe) is a local pass-and-play game for two players on the same device. The Hello world view remains available under `#hello`. No game assets or runtime code from OpenCatan are included in this static build.
+Historical release notes. UI labels below use the English wording introduced in 1.2.2; the original releases used Swedish. The current display name is Game Shelf.
+The existing installed PWA now opens a small game library. Tic-tac-toe (three-in-a-row / tic-tac-toe) is a local pass-and-play game for two players on the same device. The Hello world view remains available under `#hello`. No game assets or runtime code from OpenCatan are included in this static build.
 
 URL, service-worker scope, manifest id and start URL remain unchanged:
 
 https://stefanavesand.github.io/OpenCatan/hello/
 
-The manifest and app title now say **Spelhyllan**. iPadOS may retain the original home-screen label **Hello iPad**; use the existing icon and update the app normally. There is no need to discard the existing installation.
+The manifest and app title now say **Game Shelf**. iPadOS may retain the original home-screen label **Hello iPad**; use the existing icon and update the app normally. There is no need to discard the existing installation.
 
 ## Device check
 
 1. Turn Wi-Fi on, close the installed app completely and open it again.
-2. Accept **Installera uppdatering** when offered. Verify **v1.1.0** and **Klart för offline**. If the new version is already displayed, activation has completed.
-3. Open **Spela tre i rad**, make a few moves and wait for **Sparat på denna enhet**.
+2. Accept **Install update** when offered. Verify **v1.1.0** and **Ready for offline**. If the new version is already displayed, activation has completed.
+3. Open **Play tic-tac-toe**, make a few moves and wait for **Saved on this device**.
 4. Turn on airplane mode and turn Wi-Fi off. Close the app completely and reopen its icon.
-5. Open **Fortsätt partiet** if the library is shown. The same X/O positions should remain. Continue to a win or draw.
-6. Optionally use **Sparning och kopior → Spara en kopia**, start another game and restore the copy using **Läs in en kopia**. Restoring or resetting a running game requires explicit confirmation.
+5. Open **Continue game** if the library is shown. The same X/O positions should remain. Continue to a win or draw.
+6. Optionally use **Saves and backups → Save a backup**, start another game and restore the copy using **Restore a backup**. Restoring or resetting a running game requires explicit confirmation.
 
-This new device check is not yet confirmed on the user's iPad. Installation, cold offline startup and updating the earlier Hello versions have already been confirmed on that device.
+The user subsequently confirmed this local-game/offline recovery check on their iPad.
 
 ## Architecture
 

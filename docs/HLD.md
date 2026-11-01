@@ -1,76 +1,76 @@
-# Spelhyllan / OpenCatan — High-Level Design
+# Game Shelf / OpenCatan — High-Level Design
 
-Version 1.0 · 2026-11-01 · Föreslagen måldesign för E1/E2; ej implementerad helhet.
-Kravbas: [PRD 3.0](../PRD.md). Ändrar inte produktkraven. Befintlig PWA 1.2.0 och OpenCatan-preview är två olika implementationer; de förenas stegvis.
+Version 1.1 · 2026-11-01 · Proposed E1/E2 target design, not an implemented system.
+Requirements baseline: [PRD 3.1](../PRD.md). The PWA and OpenCatan preview are separate implementations to be unified incrementally. Version 1.1 translates the 1.0 baseline into English; it does not select a new provider or change the implementation scope.
 
-## 1. Designbeslut och gränser
+## 1. Decisions and boundaries
 
-| Beslut | Innebörd / krav |
+| Decision | Meaning / requirements |
 |---|---|
-| D-01: en regelimplementation | Ren TypeScript-motor med tillförd tid/slump, utan UI/nätverk/lagring. UI får visa tillåtna val men auktoriteten validerar. ARC-01, UX-08. |
-| D-02: auktoritativ session | Molnauktoritet för internetspel; lokal auktoritet för offline/pass-and-play och senare LAN/native. Auktoriteten håller full intern state. Ingen automatisk värdöverföring. DATA-02, SEC-06. |
-| D-03: hållbar commit före godkännande | Intern state, revision, kvitto och materialiserade spelarvyer skrivs atomiskt. Nätverket får leverera flera gånger; domänändringen genomförs högst en gång per accepterat ID. DATA-01/02. |
-| D-04: separata livscykler | Anslutning, kommando och parti har egna tillstånd. ”Ansluten” betyder inte ”synkroniserad” och timeout betyder inte avvisat. UX-04/05, NFR-01. |
-| D-05: utbytbara adaptrar | Transport och lagring bakom explicita kontrakt. Behåll befintlig PartyKit-preview och Lovable-prototyp medan ett flöde i taget flyttas. ARC-02, DATA-04. |
-| D-06: leverantörsval via litet experiment | Lovable Cloud behålls för fungerande tre-i-rad. Före Catan väljs en hanterad miljö som kan köra samma TypeScript-motor och klara atomisk persistens. Ingen migration beslutas enbart av detta dokument. OPS-01. |
+| D-01: one rule implementation | Pure TypeScript engine with injected time/randomness, no UI/network/storage. UI may show legal choices; authority validates. ARC-01, UX-08. |
+| D-02: authoritative session | Cloud authority for internet games; local authority for offline/pass-and-play and later LAN/native. Authority holds full internal state. No automatic host migration. DATA-02, SEC-06. |
+| D-03: durable commit before acceptance | Atomically write internal state, revision, receipt and materialized player views. Network may deliver repeatedly; apply each accepted command ID at most once. DATA-01/02. |
+| D-04: separate lifecycles | Connection, command and game have independent states. Connected is not synchronized; timeout is not rejection. UX-04/05, NFR-01. |
+| D-05: replaceable adapters | Explicit transport/storage contracts. Keep the working PartyKit preview and Lovable prototype while moving one flow at a time. ARC-02, DATA-04. |
+| D-06: choose provider through an experiment | Keep Lovable Cloud for working tic-tac-toe. Before Catan, choose a managed runtime supporting the shared TypeScript engine and atomic persistence. This document alone does not authorize a migration. OPS-01. |
 
-Spelare, molnoperatör och lokal värd har olika tillit. En betrodd värd kan läsa alla interna kort; denna design skyddar klienterna från att få andras kort men ger inte kryptografiskt skydd mot värden. En fysisk enhet med två spelare kan inte garantera hemliga händer mot den som kontrollerar enheten. Offline-Catan med privata händer behöver därför flera enheter eller en uttryckligen accepterad pass-and-play-modell. Tre-i-rad har inga hemliga händer.
+Players, cloud operator and local host have different trust levels. A trusted authority can read all internal cards. This design prevents clients from receiving opponents' secrets, but does not cryptographically protect against the authority. Two people sharing one device cannot be guaranteed private hands against someone controlling that device. Offline Catan with private hands therefore needs multiple devices or an explicitly accepted pass-and-play privacy model. Tic-tac-toe has no secret hands.
 
-## 2. Komponenter och beroenden
+## 2. Components and dependencies
 
 ```mermaid
 flowchart TB
-  UI[Spelhylla och spel-UI] --> Client[Sessionsklient: identitet, utkorg, synk]
-  Client --> LocalStore[Lokal lagringsport: IndexedDB]
-  Client --> Transport[Transportport och kapabiliteter]
-  Transport --> HTTP[Hanterad HTTP / polling eller WebSocket]
-  Transport -. senare .-> Native[Native TCP / Bluetooth]
-  HTTP --> Gate[Auth, behörighet och rate limits]
-  Gate --> Authority[Auktoritativ sessionshanterare]
-  Authority --> Engine[Ren TypeScript-regelmotor]
-  Authority --> Projection[Publik / privat projektion]
-  Authority --> Store[Auktoritativ lagringsport]
-  Store --> ManagedDB[Hanterad persistent lagring]
-  Native -. senare .-> LocalAuthority[Lokal sessionsauktoritet]
+  UI[Game library and game UI] --> Client[Session client: identity, outbox, sync]
+  Client --> LocalStore[Local storage port: IndexedDB]
+  Client --> Transport[Transport port and capabilities]
+  Transport --> HTTP[Managed HTTP / polling or WebSocket]
+  Transport -. later .-> Native[Native TCP / Bluetooth]
+  HTTP --> Gate[Auth, authorization and rate limits]
+  Gate --> Authority[Authoritative session manager]
+  Authority --> Engine[Pure TypeScript rule engine]
+  Authority --> Projection[Public / private projection]
+  Authority --> Store[Authority storage port]
+  Store --> ManagedDB[Managed durable storage]
+  Native -. later .-> LocalAuthority[Local session authority]
   LocalAuthority --> Engine
   LocalAuthority --> Projection
   LocalAuthority --> LocalStore
 ```
 
-Pilar visar anrop/beroenden. UI importerar sessionsklientens publika typer, inte leverantörsklient eller intern auktoritetsstate. Auktoriteten anropar regelmotorn och injicerade lagrings-/slumptjänster; motorn importerar inte dessa tjänster. UI-koppling till Redux kan behållas via en adapter under övergången. En HTTP-endpoint är en adapter till sessionen, inte själva regelmotorn.
+Arrows show calls/dependencies. UI imports public session-client types, not provider clients or internal authority state. Authority calls the engine and injected storage/randomness services; engine does not import those services. A Redux adapter may remain during migration. An HTTP endpoint adapts the session; it is not the rule engine.
 
-| Komponent | Ansvar | Får inte göra |
+| Component | Responsibility | Must not |
 |---|---|---|
-| Spel-UI | Rita mottagarens vy, samla avsikt, visa pending/fel och touchflöden. | Skapa slutliga tärningsutfall eller ändra auktoritativ state. |
-| Regelmotor | `validate/transition(state, actor, action, context)`, regelinvarianter och domänhändelser. | I/O, leverantörsanrop, egen väggklocka/slumpkälla. |
-| Sessionsklient | Spara intent, omsända samma kommando, hantera revisioner/identitet/återanslutning. | Tolka timeout som avvisat eller byta identitet tyst. |
-| Sessionsauktoritet | Behörighet, dedup, tur-/fasvalidering via motor, revision och atomisk commit. | Bekräfta hållbar framgång innan commit. |
-| Projektion | Skapa tillåtna spelarvyer och logghändelser med fältlistor. | Serialisera full state och sedan hoppas att UI döljer fält. |
-| Transport | Leverera bytes/envelopes, status och verkliga begränsningar. | Ha spelregler eller lova exakt-en-gång-leverans. |
-| Lagring | Transaktioner, schema, snapshots/kvitton, utkorg och retention. | Bestämma ett drags giltighet. |
+| Game UI | Render recipient view, collect intent, show pending/errors and touch controls. | Generate final dice outcomes or mutate authoritative state. |
+| Rule engine | `validate/transition(state, actor, action, context)`, rule invariants and domain events. | Perform I/O or use its own wall clock/random source. |
+| Session client | Persist intent, resend the same command, handle revisions/identity/reconnection. | Treat timeout as rejection or silently replace identity. |
+| Session authority | Permissions, dedup, engine validation, revision and atomic commit. | Acknowledge durable success before commit. |
+| Projection | Explicitly allowed player fields and log events. | Serialize full state and rely on UI to hide secrets. |
+| Transport | Deliver bytes/envelopes, status and actual limitations. | Implement game rules or promise exactly-once delivery. |
+| Storage | Transactions, schemas, snapshots/receipts, outbox and retention. | Decide move legality. |
 
-Föreslagna paketgränser är logiska, inte krav på omedelbart monorepo: `domain/`, `session/`, `ports/`, `adapters/`, `ui/`. `src/game/engine/base` och `src/session` är startpunkter, men de befintliga state-typerna behöver frigöras från Redux och setup-logiken extraheras. Importgränser ska gå att kontrollera automatiskt.
+Suggested package boundaries are logical, not an immediate monorepo requirement: `domain/`, `session/`, `ports/`, `adapters/`, `ui/`. Existing `src/game/engine/base` and `src/session` are starting points, but state types need to be detached from Redux and setup logic extracted. Import boundaries should be automatically enforceable.
 
-## 3. Identiteter och datamodell
+## 3. Identities and data model
 
-Identiteter hålls isär: `principalId` (verifierat molnsubjekt eller lokalt parat subjekt), `playerId` (plats i session), `sessionId` (parti), `roomId` (inbjudnings-/lobbyresurs). Mappningen till spelarplats ägs av auktoriteten. En ny inloggning är inte automatiskt samma spelare.
+Keep distinct: `principalId` (verified cloud subject or locally paired subject), `playerId` (session seat), `sessionId` (game), `roomId` (invitation/lobby resource). Authority owns the seat mapping. A new sign-in is not automatically the same player. Future friend relationships connect account identities, not game seats, and never grant session access by themselves.
 
-| Objekt | Innehåll / ägare |
+| Object | Content / owner |
 |---|---|
-| SessionMetadata | Speltyp, regelversion, deltagare/platser, inställningar, livscykel, auktoritets-ID och fast auktoritetsepok. Ingen hemlig hand. |
-| AuthoritySnapshot | Schema-/regelversion, session, revision, full intern state, fas, kortlek, intern slump-/effektinformation och senaste hållbara commit. Endast auktoritet/behörig återställning. |
-| PlayerView | Protokoll-/vyversion, session, auktoritetsepok, revision, publika fält och denna spelares privata fält. Aldrig källa till full återställning. |
-| CommandIntent | Klientens stabila ID, session, protokollversion, förväntad revision, handling och lokalt pendingstatus. Sparas innan sändning. |
-| CommandReceipt | Nyckel `(sessionId, playerId, commandId)`, kanonisk payloadhash, utfall/felkod, beslutsrevision och regel-/protokollversion. Inget fullständigt snapshot eller andras hemligheter. |
-| IdentityBinding | Verifierat subjekt till spelarplats, giltighet och eventuell framtida återställningsmekanism. Token är inte ett publikt playerId. |
+| SessionMetadata | Game type, rule version, participants/seats, settings, lifecycle, authority ID and fixed authority epoch. No private hand. |
+| AuthoritySnapshot | Schema/rule versions, session, revision, full internal state, phase, deck, internal randomness/effect information and latest durable commit. Authority/authorized recovery only. |
+| PlayerView | Protocol/view version, session, authority epoch, revision, public fields and this player's private fields. Never a source for full recovery. |
+| CommandIntent | Stable client ID, session, protocol version, expected revision, action and local pending state. Persist before sending. |
+| CommandReceipt | Key `(sessionId, playerId, commandId)`, canonical payload hash, outcome/error, decision revision and rule/protocol versions. No full snapshot or opponents' secrets. |
+| IdentityBinding | Verified subject to seat, validity and future recovery mechanism. A token is not a public playerId. |
 
-Håll isär protokollversion, sparschemaversion, regelversion och app/build-version. Okänd version ger ett maskinläsbart fel och bevarade data. Ett pågående parti är låst till sin regelversion; ny app får inte tyst ändra reglerna mitt i partiet.
+Distinguish protocol version, save schema, rule version and app/build version. Unsupported versions fail explicitly and preserve data. A running game is pinned to its rule version; an app update must not silently change rules mid-game.
 
-Slump genereras av auktoritetens injicerade CSPRNG och används som explicit input till motorn. Utfall och nödvändig intern fortsättningsinformation sparas i samma commit som draget. Ingen klient får full framtida kortordning, slumpseed eller annan spelares privata återställningsdata. Vid misslyckad CAS är draget inte accepterat; vid lyckad commit avgör kvittot alltid återförsökets resultat.
+Authority's injected CSPRNG generates randomness, passed explicitly into the engine. Outcomes and required continuation information are stored in the move's commit. Never give clients future deck order, seeds or another player's private recovery data. Failed CAS means the move was not accepted; after successful commit, its receipt determines every retry's result.
 
-## 4. Protokoll och transportport
+## 4. Protocol and transport port
 
-Logiskt kontrakt, inte en ny parallell implementation i denna dokumentetapp:
+Logical contract, not a new parallel implementation in this documentation stage:
 
 ```typescript
 interface CommandEnvelope {
@@ -81,7 +81,7 @@ interface CommandEnvelope {
   expectedRevision: number;
   action: { type: string; payload: unknown };
 }
-// actor kommer från verifierad anslutning/token, inte från envelope.
+// Actor comes from a verified connection/token, never the envelope.
 interface TransportCapabilities {
   requiresInternet: boolean;
   updateMode: 'polling' | 'push';
@@ -94,220 +94,220 @@ interface TransportCapabilities {
 }
 ```
 
-Operationer: `connect(credentials, invitation?)`, `submit(command)`, `readView(sessionId, knownRevision?)`, `readReceipt(commandId)`, `subscribe(handler)` och `close()`. HTTP kan implementera prenumeration genom foreground-polling; native kan implementera riktad push. Sessionsklienten äger retry, utkorg och synkronisering. Maxpayload och versionsstöd kontrolleras på båda sidor; autentisering och begränsningar kontrolleras alltid på serversidan.
+Operations: `connect(credentials, invitation?)`, `submit(command)`, `readView(sessionId, knownRevision?)`, `readReceipt(commandId)`, `subscribe(handler)` and `close()`. HTTP may implement subscription through foreground polling; native may provide targeted push. Session client owns retry/outbox/sync. Both sides enforce payload/version limits; server always enforces authentication and quotas.
 
-Svar har version, session, auktoritetsepok, commandId där relevant, utfall, maskinläsbar felkod, revision och vid behov tillåten vy eller retry-tid. En mottagare avvisar fel session/epok och ignorerar äldre vyer. Fullständiga vyer kan hoppa fram i revision; framtida deltauppdateringar kräver exakt basrevision, annars full synk. Löpnummer är sessionsrevisioner, inte transportens paketnummer.
+Responses include version, session, authority epoch, command ID where relevant, outcome, machine-readable error, revision and optionally an authorized view/retry time. Reject wrong session/epoch and ignore older views. Full views may jump revisions; future deltas require an exact base revision or trigger full sync. Sequence numbers are session revisions, not transport packet numbers.
 
-Payloadhash binds till kanoniskt innehåll inklusive handling, version, epok och förväntad revision; byte-/fältordning får inte ändra betydelsen. Samma nyckel och annat innehåll ger `COMMAND_ID_CONFLICT`. Dedup sker innan jämförelse med aktuell revision, så ett tidigare godkänt kommando inte blir avvisat vid omsändning.
+Bind the payload hash to canonical content including action, version, epoch and expected revision; byte/field order must not change meaning. Same key with different content returns `COMMAND_ID_CONFLICT`. Dedup precedes comparison with the current revision, so a previously accepted command is not rejected on retry.
 
-Kvitto-retention ska täcka hela perioden då sessionen kan återupptas plus retryfönster. Efter gallring lämnas en utgångsmarkör eller stängd session som nekar gamla kommandon; saknat kvitto får inte göra att ett gammalt accepterat ID exekveras på nytt. Exakta tider är en releasefråga (§11).
+Retain receipts for the full resumable session lifetime plus the retry window. After cleanup, an expiry marker or closed session must reject old commands; a missing receipt must not allow an old accepted ID to execute again. Exact retention is a release decision (§11).
 
-## 5. Kommandoflöde och atomisk lagring
+## 5. Command flow and atomic persistence
 
 ```mermaid
 sequenceDiagram
-  participant UI as Spelar-UI
-  participant C as Sessionsklient
+  participant UI as Player UI
+  participant C as Session client
   participant L as IndexedDB
-  participant A as Molnauktoritet
-  participant D as Hållbar lagring
-  UI->>C: Avsikt
-  C->>L: Spara ID, handling och basrevision
-  L-->>C: Lokalt commit klart
-  C->>A: Samma versionshanterade kommando
-  A->>A: Auth, gränser, medlemskap, format
-  A->>D: Läs snapshot och ev. tidigare kvitto
-  D-->>A: Underlag
-  A->>A: Regeltransition och projektion
-  A->>D: Atomisk CAS: state + revision + kvitto + vyer
-  D-->>A: Commit eller konflikt
-  A-->>C: Hållbart utfall
-  C->>L: Spara utfall och markera utkorg löst
-  C-->>UI: Bekräfta och visa aktuell tillåten vy
-  Note over C,A: Förlorat svar: samma ID/payload skickas igen
+  participant A as Cloud authority
+  participant D as Durable storage
+  UI->>C: Intent
+  C->>L: Save ID, action and base revision
+  L-->>C: Local commit complete
+  C->>A: Same versioned command
+  A->>A: Auth, limits, membership, format
+  A->>D: Read snapshot and prior receipt
+  D-->>A: Input
+  A->>A: Rule transition and projection
+  A->>D: Atomic CAS: state + revision + receipt + views
+  D-->>A: Commit or conflict
+  A-->>C: Durable outcome
+  C->>L: Save result and resolve outbox
+  C-->>UI: Confirm and show current authorized view
+  Note over C,A: Lost response: resend identical ID/payload
 ```
 
-En betrodd commit-operation gör medlems-/versionskontroller och dedup igen inom transaktionen, kontrollerar basrevision och skriver allt eller inget. Unik kvittonyckel och CAS/serialisering förhindrar samtidiga dubbeldrag. En regelavvisning ger också ett stabilt beslutsutfall som kan återfås; tillfälliga auth-, överlast- och transportfel är inte domänbeslut och finaliserar inte kommandot. Vid revisionskonflikt väljer användaren eventuellt ett nytt drag med nytt ID efter synk.
+Trusted commit operation repeats membership/version/dedup checks within the transaction, checks base revision and writes everything or nothing. Unique receipt keys and CAS/serialization prevent concurrent duplicate moves. Rule rejection also has a stable, recoverable decision result; transient auth/overload/transport errors are not domain decisions and do not finalize the command. After revision conflict, the user may choose a new move with a new ID after sync.
 
-Om commit lyckas men publicering av en notifiering misslyckas finns state/vyer redan kvar. Polling eller återanslutning hittar dem. Framtida push använder transaktionell notifieringsutkorg eller motsvarande för att undvika glapp, men notifieringen är aldrig hållbarhetskvittot.
+If commit succeeds but notification fails, durable state/views remain available to polling/reconnect. Future push uses a transactional notification outbox or equivalent to prevent gaps; notification itself is never the durability receipt.
 
-Lokal auktoritet använder samma sessionsalgoritm och en IndexedDB-transaktion över intern state, revision, kvitton och vyer. Motorn beräknar först; transaktionen jämför läst basrevision och skriver atomiskt. Undvik godtycklig async-I/O mitt i en IndexedDB-transaktion. Klientens utkorg och auktoritetens kvitton har olika syften, även om de råkar ligga på samma enhet.
+Local authority uses the same session algorithm and one IndexedDB transaction across internal state, revision, receipts and views. Compute the transition first, then compare base revision and write atomically. Avoid arbitrary async I/O inside IndexedDB transactions. Client outbox and authority receipts serve different purposes even on one device.
 
-### Hanterad TypeScript-exekvering — experiment före leverantörsbeslut
+### Managed TypeScript execution: experiment before provider choice
 
-Första kandidat: en serverfunktion i Lovable Cloud/Supabase som kör den gemensamma motorn, med en privilegierad, atomisk databasoperation för **persistens**, inte duplicerade spelregler. Serverfunktionen hämtar full intern state på serversidan och CAS-committar resultat, kvitto och spelarvyer tillsammans. Klienter får inte anropa intern commit, skriva state eller läsa hemliga tabeller. Om funktions-/databasbehörigheter, transaktioner, versionering eller kostnad inte fungerar väljs en annan hanterad adapter.
+First candidate: a Lovable Cloud/Supabase server function running the shared engine, with a privileged atomic database operation for **persistence**, not duplicated game rules. Server function reads full internal state server-side and CAS-commits state/receipt/player views together. Clients cannot invoke internal commit, write state or read secret tables. If function/database permissions, transactions, versioning or cost are unsuitable, choose another managed adapter.
 
-Andra kandidat: TypeScript i Cloudflare Workers/PartyServer med Durable Objects, där ett objekt samordnar ett parti och persistent lagring ligger bakom samma port. Att en instans är i minnet ersätter inte krav på hållbar commit eller korrekt samtidighet. Ny produktion ska inte förutsätta den gamla PartyKit-hostingplattformen; dokumentationen om driftsättning måste verifieras vid val.
+Second candidate: TypeScript on Cloudflare Workers/PartyServer with Durable Objects, one object coordinating a game and durable storage behind the same port. An in-memory instance does not replace durable commit or concurrency protection. New production must not assume the former PartyKit hosting platform; verify current deployment documentation when choosing.
 
-**Beslutspunkt ADR-01:** demonstrera tre-i-rad med exakt samma motor online och lokalt, samtidighet, commit/krasch/retry, privat dummydata och mätta kostnader. Välj därefter. Befintlig SQL-auktoritet för tre-i-rad fortsätter tills ersättaren klarat dessa tester. Ingen av kandidaterna är verifierad med OpenCatan i detta skede.
+**Decision ADR-01:** demonstrate tic-tac-toe using exactly the same engine online/locally, concurrency, commit/crash/retry, private dummy data and measured cost. Then select a provider. Existing SQL-authoritative tic-tac-toe continues until its replacement passes. Neither candidate has been verified with OpenCatan at this stage.
 
-## 6. Tillståndsdiagram
+## 6. State charts
 
-Diagrammen är målspecifikation. Övergångar nedan anger viktiga villkor/sidoeffekter; verkliga implementationer behöver explicit reducer/state machine och tester, inte bara diagram.
+These diagrams specify the target. Transitions below identify key guards/effects; implementations need explicit reducers/state machines and tests, not diagrams alone.
 
-### 6.1 Anslutning per deltagare
+### 6.1 Participant connection
 
 ```mermaid
 stateDiagram-v2
   [*] --> Disconnected
-  Disconnected --> Connecting: öppna/återanslut och nät finns
-  Connecting --> Synchronizing: verifierad identitet och transport
-  Connecting --> AuthBlocked: identitet kan inte förnyas
-  Connecting --> Backoff: tillfälligt fel eller 429
-  Connecting --> Disconnected: offline eller app dold
-  Synchronizing --> Ready: utkorg löst och aktuell behörig vy
-  Synchronizing --> VersionBlocked: inkompatibel version
-  Synchronizing --> Closed: rum utgånget eller åtkomst återkallad
-  Synchronizing --> Backoff: tillfälligt fel
-  Synchronizing --> Disconnected: offline eller app dold
-  Ready --> Synchronizing: revisionskonflikt eller återkomst från vila
-  Ready --> Disconnected: nät av / app dold / transport bruten
-  Ready --> Connecting: token behöver förnyas
-  Backoff --> Connecting: väntetid passerad och synlig app
-  Backoff --> Disconnected: offline eller app dold
-  AuthBlocked --> Connecting: uttrycklig säker återställning
-  VersionBlocked --> Connecting: kompatibel klient tillgänglig
+  Disconnected --> Connecting: open/reconnect with network
+  Connecting --> Synchronizing: identity and transport verified
+  Connecting --> AuthBlocked: identity cannot be refreshed
+  Connecting --> Backoff: transient failure or 429
+  Connecting --> Disconnected: offline or app hidden
+  Synchronizing --> Ready: outbox resolved and authorized view current
+  Synchronizing --> VersionBlocked: incompatible version
+  Synchronizing --> Closed: room expired or access revoked
+  Synchronizing --> Backoff: transient failure
+  Synchronizing --> Disconnected: offline or app hidden
+  Ready --> Synchronizing: revision conflict or resume from sleep
+  Ready --> Disconnected: offline / app hidden / transport lost
+  Ready --> Connecting: token needs refresh
+  Backoff --> Connecting: delay elapsed and app visible
+  Backoff --> Disconnected: offline or app hidden
+  AuthBlocked --> Connecting: explicit safe recovery
+  VersionBlocked --> Connecting: compatible client available
   Closed --> [*]
 ```
 
-- Bara `Ready` tillåter nytt spelkommando; anslutnings-/versionsblockering raderar aldrig utkorgen.
-- Vid återkomst verifieras identitet, kvarvarande intent avgörs, sedan hämtas aktuell vy. Ett äldre kvitto får inte rulla tillbaka en nyare vy.
-- `Disconnected` beskriver klientens uppdateringsläge; molnpartiet kan fortsätta för andra deltagare. Dold app pausar polling. In-flight-anrop kan hinna committa; kvarvarande utkorg gör utfallet återhämtningsbart.
-- Tillfällig tokenförnyelse kan gå via `Connecting`; ett oåterställbart fel går till `AuthBlocked`. Ingen automatisk signup för att ersätta förlorad identitet.
+- Only `Ready` allows new game commands; connection/version blocking never deletes the outbox.
+- On return, verify identity, resolve pending intent, then fetch current view. An old receipt must not roll back a newer view.
+- `Disconnected` describes the client's update state; cloud play may continue for others. Hidden apps stop polling. An in-flight request may still commit; durable outbox enables recovery.
+- Transient token refresh goes through `Connecting`; unrecoverable identity goes to `AuthBlocked`. Never automatically sign up a replacement identity.
 
-### 6.2 Ett kommando
+### 6.2 One command
 
 ```mermaid
 stateDiagram-v2
   [*] --> Intent
-  Intent --> Persisted: lokal utkorg commit
-  Intent --> LocalFailure: lagring misslyckas, inget skickat
-  LocalFailure --> Intent: användaren försöker igen
-  Persisted --> Sending: rätt identitet och anslutning
-  Sending --> Accepted: hållbart godkänt kvitto
-  Sending --> Rejected: stabilt domänavslag
-  Sending --> Unknown: timeout / avbrott / tillfälligt fel
-  Unknown --> Sending: samma ID och payload efter synk/backoff
-  Accepted --> Resolved: kvitto sparat lokalt
-  Rejected --> Resolved: kvitto sparat lokalt
-  Accepted --> Unknown: lokalt kvitto kunde inte sparas
-  Rejected --> Unknown: lokalt kvitto kunde inte sparas
+  Intent --> Persisted: local outbox commit
+  Intent --> LocalFailure: storage failed, nothing sent
+  LocalFailure --> Intent: user retries
+  Persisted --> Sending: correct identity and connection
+  Sending --> Accepted: durable accepted receipt
+  Sending --> Rejected: stable domain rejection
+  Sending --> Unknown: timeout / interruption / transient error
+  Unknown --> Sending: identical ID/payload after sync/backoff
+  Accepted --> Resolved: receipt persisted locally
+  Rejected --> Resolved: receipt persisted locally
+  Accepted --> Unknown: local receipt persistence failed
+  Rejected --> Unknown: local receipt persistence failed
   Resolved --> [*]
 ```
 
-`Persisted`/`Unknown` överlever processdöd via utkorgen; efter omstart behandlas även ”skickas” som okänt. Återförsök använder exakt sparat innehåll. Ett avvisat drag ändras inte och skickas inte som ett nytt drag automatiskt. Ny användaravsikt skapar nytt ID. Ett versions-/authfel blockerar sändningen men är inte ett bevis för att en tidigare sändning aldrig committade.
+`Persisted`/`Unknown` survive process death through the outbox; after restart, treat sending as unknown too. Retry exact stored content. Never modify/reissue a rejected move as a new command automatically. New intent gets a new ID. A version/auth failure blocks sending but is not proof that an earlier request never committed.
 
-### 6.3 Partiets livscykel
+### 6.3 Game lifecycle
 
 ```mermaid
 stateDiagram-v2
   [*] --> Creating
-  Creating --> Lobby: skapandet hållbart sparat
-  Creating --> CreateFailed: definitivt fel, inget parti skapat
-  Lobby --> Running: behörig start och spelkrav uppfyllda
-  Lobby --> Expired: kommunicerad inaktivitetsgräns
-  Running --> Finished: giltig vinst / avslut enligt regler
-  Running --> Paused: lokal värd otillgänglig
-  Paused --> Running: samma auktoritet återställd och peers synkade
-  Finished --> Archived: retentionpolicy
-  Expired --> Archived: retentionpolicy
+  Creating --> Lobby: creation durably committed
+  Creating --> CreateFailed: definitive failure, no game created
+  Lobby --> Running: authorized start and player requirements met
+  Lobby --> Expired: communicated inactivity policy
+  Running --> Finished: valid victory or rule-defined completion
+  Running --> Paused: local authority unavailable
+  Paused --> Running: same authority restored and peers synchronized
+  Finished --> Archived: retention policy
+  Expired --> Archived: retention policy
   Archived --> [*]
 ```
 
-Okänt skapandeutfall stannar under utredning/omsändning i kommandodiagrammet; det får inte skapa ett nytt parti med nytt ID. Molnets processomstart återställer samma `Running`-parti från lagring; en frånkopplad klient pausar inte automatiskt andra. Ingen automatisk övergång från pågående parti till raderat på grund av en enskild spelares frånvaro. Explicit övergivande/radering och retentionpolicy måste beslutas innan de automatiseras.
+Unknown creation outcome remains pending/resolving under the command chart; never create a replacement game with a new ID automatically. A cloud process restart restores the same `Running` game from storage; one disconnected client does not pause others. Do not automatically delete an active game because one player is absent. Decide explicit abandonment/deletion/retention policy before automation.
 
-Spelmotorn har dessutom egna faser: Catan startplacering → roll → eventuell discard/rövare/stöld → huvudfas → nästa tur/slut. Utvecklingskort kan skapa underfaser, exempelvis pre-roll riddare som återgår till roll. Detaljerad regel-state-chart tas fram när setup extraheras och omfattar alla kommandon; befintlig `GamePhase` får inte ensam betraktas som verifierad specifikation.
+The engine additionally has game-specific phases: Catan setup → roll → optional discard/robber/steal → main phase → next turn/end. Development cards may create subphases, e.g. pre-roll Knight returns to roll. Produce the detailed rule state chart when extracting setup, covering every command; the existing `GamePhase` type is not a verified specification by itself.
 
-## 7. Felmodell och användarbeteende
+## 7. Error model and user behavior
 
-| Kodklass | Återförsök / övergång | UI och datakonsekvens |
+| Code class | Retry / transition | UI and data implications |
 |---|---|---|
-| `NETWORK_UNAVAILABLE`, `TIMEOUT`, tillfällig `SERVER_UNAVAILABLE` | `Unknown`/`Backoff`; samma ID | Visa ”utfallet kontrolleras”; behåll intent. Ingen optimistisk hållbar bekräftelse. |
-| `RATE_LIMITED` | Respektera `Retry-After` och jitter | Behåll intent, visa väntetid, stoppa aggressiv polling. |
-| `AUTH_EXPIRED` | En samordnad tokenförnyelse | Behåll plats/utkorg; återuppta samma intent när verifierat. |
-| `IDENTITY_UNRECOVERABLE`, `FORBIDDEN` | Blockera; ingen ändlös retry | Förklara åtkomstproblemet; erbjud kontrollerad återställning eller nytt separat parti. |
-| `REVISION_CONFLICT` | Stabilt avslag, sedan synk | Visa aktuell vy; nytt drag kräver användarval och nytt ID. |
-| `ILLEGAL_ACTION`, `ROOM_FULL` | Stabilt avslag | Begriplig orsak utan privat information. |
-| `COMMAND_ID_CONFLICT` | Blockera det felaktiga intentet | Behåll diagnostik utan hemlig payload; exekvera inte annat innehåll. |
-| `LOCAL_STORAGE_FAILURE` | Stoppa ny sändning / behåll osäker utkorg | Visa att draget inte skickats, eller att redan sänt utfall behöver kontrolleras. Skilj dessa fall. |
-| `AUTHORITY_STORAGE_FAILURE` | Ingen framgång före commit | Transient retry med samma ID; efter osäker commit avgör kvittouppslag. |
-| `UNSUPPORTED_VERSION`, `CORRUPT_SAVE` | Blockera berörd session | Bevara originaldata, erbjud kompatibel version eller säker återställning. |
-| `SESSION_EXPIRED`, `SESSION_DELETED` | Slutligt `Closed` | Ingen omsändning eller ny session under gammalt ID. Förklara att återställning saknas. |
+| `NETWORK_UNAVAILABLE`, `TIMEOUT`, transient `SERVER_UNAVAILABLE` | `Unknown`/`Backoff`; same ID | Explain outcome is being checked; retain intent. No optimistic durable acknowledgment. |
+| `RATE_LIMITED` | Honor `Retry-After` and jitter | Retain intent, explain delay, stop aggressive polling. |
+| `AUTH_EXPIRED` | One coordinated token refresh | Keep seat/outbox; resume same intent after verification. |
+| `IDENTITY_UNRECOVERABLE`, `FORBIDDEN` | Block; no endless retry | Explain access problem; offer controlled recovery or a new separate game. |
+| `REVISION_CONFLICT` | Stable rejection, then sync | Show current view; a new move needs user choice/new ID. |
+| `ILLEGAL_ACTION`, `ROOM_FULL` | Stable rejection | Understandable reason without secret information. |
+| `COMMAND_ID_CONFLICT` | Block invalid intent | Retain diagnostics without secret payload; never execute changed content. |
+| `LOCAL_STORAGE_FAILURE` | Stop new sending / retain uncertain outbox | Distinguish never-sent moves from previously sent outcomes requiring resolution. |
+| `AUTHORITY_STORAGE_FAILURE` | No success before commit | Transient retry with same ID; receipt lookup resolves uncertain commit. |
+| `UNSUPPORTED_VERSION`, `CORRUPT_SAVE` | Block affected session | Preserve original data; offer compatible version or safe recovery. |
+| `SESSION_EXPIRED`, `SESSION_DELETED` | Terminal `Closed` | No resend or new session under the old ID. Explain lack of recovery. |
 
-Retry-policy inför E1: exponentiell väntan med jitter och begränsad samtidighet, max en sändning per sessionsklient, inga retry-loopar i bakgrunden. Numeriska intervall/rate limits är konfiguration och mäts före release; prototypens fasta femsekunderspolling och generiska felhantering uppfyller ännu inte hela policyn. Transportfel och HTTP-status översätts till stabila domänneutrala koder; inga råa databastexter eller tokens till UI/logg.
+E1 retry policy: exponential delay with jitter and bounded concurrency, at most one sending operation per session client, no background retry loops. Numeric intervals/rate limits are measured configuration before release; the original prototype's fixed five-second polling/generic errors did not implement the full policy. Translate HTTP/transport failures into stable domain-neutral codes; no raw database errors/tokens in UI/logs.
 
-## 8. Säkerhetsdesign och hotmodell
+## 8. Security design and threat model
 
-| Hot / tillitsgräns | Kontroll | Verifiering |
+| Threat / trust boundary | Control | Verification |
 |---|---|---|
-| Klient förfalskar playerId, drag eller framtida revision | Verifierat subjekt, serversidig platsbindning och regelvalidering, CAS. | T-03/04/07. |
-| Länk läcker / obehörig läser rum eller prenumeration | Inbjudan används bara för kontrollerad join; medlemskontroll på API och varje vy/prenumeration. Fullt rum skyddar platser. Framtida länkutgång/rotation ingår i ADR-02. | T-03/06. |
-| Replay/dubbelkommando/ändrad payload | Unikt ID, innehållshash, stabilt kvitto och definierad retention/utgång. | T-04/10. |
-| Andras händer läcker i state, fel, logg eller realtid | Full intern state i server-only storage; fältbaserad projektion till separata mottagarvyer. Inga hemliga fält i publika notifieringar. | T-06 med faktisk nätverksinspektion. |
-| Skriptinjektion stjäl token från webblagring | Text-rendering, inga osäkra HTML-insättningar, CSP, inga externa runtime-script, beroendegranskning; tokens får inte loggas/exporteras. IndexedDB eliminerar inte XSS-risken. Native credentials senare i säker plattformslagring. | T-08 + säkerhetsgranskning. |
-| Masskapande, gissning, stor payload, reconnectstorm | Gateway- och sessionsgränser före dyrt arbete, IP/identitet/rum-kvoter, payloadtak, backoff och kostnadslarm. | T-08 i isolerad testmiljö. |
-| Felkonfigurerad databas / klient kringgår API | RLS för läsningar, neka klientmutation, intern commit server-only med minsta möjliga rätt. Testa också direkt databas/API/prenumeration. | T-06/08. |
-| Illvillig lokal värd / molnoperatör | Betrodd auktoritet dokumenteras. Ingen utfästelse om skydd mot dess fulla interna åtkomst. Ingen automatisk värdöverföring. | Granskning + T-10. |
+| Forged player ID, action or future revision | Verified subject, server-side seat binding, engine validation, CAS. | T-03/04/07. |
+| Leaked invitation / unauthorized read or subscription | Invitation enables controlled join only; membership checked for every API/view/subscription. Full rooms protect seats. Future link expiry/rotation is ADR-02. | T-03/06. |
+| Replay, duplicates, changed payload | Unique ID, content hash, stable receipt and defined retention/expiry. | T-04/10. |
+| Secret hands leak through state, error, logs or realtime | Server-only full state; allowlisted separate recipient projections. No private fields in public notifications. | T-06 with actual network inspection. |
+| Script injection steals browser tokens | Text rendering, no unsafe HTML, CSP, no external runtime scripts, dependency review; never log/export tokens. IndexedDB does not remove XSS risk. Native credentials later use secure platform storage. | T-08 + security review. |
+| Mass creation, guessing, large payload, reconnect storm | Gateway/session limits before expensive work, identity/IP/room quotas, payload limits, backoff and cost alerts. | T-08 in an isolated environment. |
+| Misconfigured database / API bypass | RLS reads, deny client mutations, server-only internal commit with least privilege. Test direct database/API/subscription paths too. | T-06/08. |
+| Malicious local host / cloud operator | Document trusted authority. No promise to protect secrets from its full internal access. No automatic migration. | Review + T-10. |
 
-Rums-ID:n ska vara svåra att gissa; användarvänliga kortkoder kräver separat gränssatt uppslag, inte svagare läsbehörighet. Prototype-UUID är inte ett löfte om färdiga join-abuse-kontroller. Publika klientnycklar är tillåtna; privilegierade nycklar stannar i serverns secrets och roteras enligt driftrutin.
+Room IDs should be hard to guess. Friendly short codes need separately rate-limited lookup, not weaker read permissions. Prototype UUIDs are not completed join-abuse controls. Public client keys are allowed; privileged keys remain in server secrets and follow a rotation procedure.
 
-Rate limits behöver separata kategorier: anonym signup, create, join, read/poll, submit, subscriptions och payload. Leverantörens standardgränser räcker inte som produktpolicy. Återförsök och dedup kostar fortfarande resurser och ska också begränsas. Normala spelare bakom samma NAT ska verifieras; använd inte enbart IP som identitet. Före pilot beslutas konkreta siffror, svarskoder/Retry-After, hårda kvoter och kostnadslarm i ADR-03. Larm får inte beskrivas som garanterat kostnadstak.
+Separate rate-limit categories: anonymous signup, create, join, read/poll, submit, subscriptions and payload. Provider defaults are not product policy. Retries/dedup still cost resources and need limits. Test normal shared-NAT use; IP alone is not identity. Before pilot, ADR-03 defines concrete values, response codes/Retry-After, hard quotas and cost alerts. Never describe an alert as a guaranteed spending cap.
 
-## 9. Offline, uppdateringar och återställning
+## 9. Offline, updates and recovery
 
-Service worker cachelagrar appskal och nödvändiga resurser per build. ”Klart för offline” kräver verifierad komplett nedladdning. Installation av ny build får inte förstöra den aktiva; aktivering väntar på pågående lokala skrivningar och lämnar utkorgen hållbart sparad. Användaren får ett kontrollerat uppdateringsval.
+Service worker caches a build-specific app shell and required resources. “Ready for offline” requires verified complete download. Installing a candidate must not destroy the active version; activation waits for local writes and leaves the outbox durable. User controls update activation.
 
-Lokalt spel: IndexedDB-adapter med versionshanterad state/kvitto/utkorg, transaktionell CAS och hantering av kvot/nekad beständighet. Molnspel: klientcache är bara behörig vy, aldrig auktoritativ ersättning. Utan nät kan UI visa senast sparad tillåten vy som inaktuell men inga nya internetdrag godkännas. Prototypen återhämtar för närvarande vyn först när nätet kommer tillbaka.
+Local play: IndexedDB adapter with versioned state/receipts/outbox, transactional CAS and handling of quota/denied persistence. Cloud play: client cache is only an authorized view, never a replacement authority. Without network, the UI may show a stored authorized view marked stale but cannot accept new internet moves. The prototype currently restores its view only when network returns.
 
-Webblagring kan rensas trots beständighetsbegäran; en lokal säkerhetskopia har därför ett eget format. Full auktoritetsbackup innehåller hemligheter och får inte exporteras som vanlig spelarkopia. En molnspelare får bara exportera godkänd publik/egen information enligt beslutad policy. Att dela en full lokal värdbackup kan röja allas kort och måste varnas/behörighetsstyras.
+Browser storage may be cleared despite persistence permission; local backup therefore has its own format. A full authority backup contains secrets and must not be exported as a normal player copy. Cloud players export only permitted public/own information under an explicit policy. Sharing a full local-host backup may reveal all cards and requires a warning/permission boundary.
 
-Separata felmodeller:
+Distinct recovery failures:
 
-- Klient-/auktoritetsprocess dör: återställ senast committade snapshot och kvitton; ett hållbart bekräftat drag ska inte förloras vid vanlig processomstart.
-- Lokal värdenhet eller webblagring försvinner: kräver behörig backup eller partiet kan vara förlorat. Andras beskurna vyer räcker inte.
-- Leverantörens lagring förloras: backup/PITR och testad restore behövs; RPO/RTO fastställs separat. En säker transport eller DB-transaktion ger inte automatiskt katastrofåterställning.
-- Inkompatibel uppdatering: bevara data/regelversion och stöd gammal session eller stoppa säkert. Rulla inte tillbaka databasformat med enbart frontend-rollback.
+- Client/authority process dies: restore latest committed snapshot/receipts; ordinary process restart must not lose durably acknowledged moves.
+- Local host device/browser storage is lost: requires authorized backup or the game may be lost. Other players' redacted views are insufficient.
+- Provider loses storage: requires backup/PITR and tested restore; decide RPO/RTO separately. Transport security/DB transactions are not disaster recovery.
+- Incompatible update: preserve data/rule version, support the old session or stop safely. Frontend rollback alone cannot roll back a database format.
 
-## 10. Drift och observerbarhet
+## 10. Operations and observability
 
-Statisk PWA kan ligga kvar på GitHub Pages; backend körs hanterat. Separera test och produktion, använd versionsstyrda migrationer och verifiera gamla installerade klienter mot ny backend. Driftsättning av app och backend ska inte kräva samtidig uppdatering av alla iPads.
+Static PWA may remain on GitHub Pages; backend is managed. Separate test/production, version migrations and verify old installed clients against new backend. Deployment must not require updating every iPad simultaneously.
 
-Mät p50/p95 kvittotid från användaravsikt till hållbart kvitto, motspelarens synlighetstid, andel återanslutningar/synkfel, kvitto-retries, avvisningskoder, auth-/rate-/lagringsfel och kostnad per aktivt rum/speltimme. Nätlatens och lokal skrivtid redovisas för PRD-målen. Korrelations-ID:n är begränsade; logga aldrig token, kortpayload eller intern snapshot. Retention gäller också loggar och backups.
+Measure p50/p95 intent-to-durable-receipt time, opponent visibility latency, reconnect/sync failures, receipt retries, rejection codes, auth/rate/storage failures and cost per active room/game-hour. Report network latency/local-write time with PRD targets. Use bounded correlation identifiers; never log tokens, card payloads or internal snapshots. Retention covers logs/backups too.
 
-Ingen stor lasttestning mot fungerande produktion. Använd isolerad miljö och budget för T-08. Innan bredare pilot beslutas gallring av gamla rum/anonyma identiteter, avslutade partier, kvitton och lokala kopior. Samordna radering med aktivt parti och retrykontrakt; kommunicera när åtkomst upphör. Definiera driftansvar, incident-/rollbackrutin och leverantörsavbrottens användarbesked.
+Do not run large load tests against working production. Use an isolated environment/budget for T-08. Before a wider pilot, decide cleanup for old rooms/anonymous identities, completed games, receipts and local copies. Coordinate deletion with active games/retry contracts; communicate access expiry. Define operational owner, incident/rollback procedures and provider-outage messaging.
 
-## 11. Gap, beslut och liten implementationsordning
+## 11. Gaps, decisions and incremental implementation
 
-### Nuläge kontra mål
+### Existing implementation versus target
 
-| Finns | Gap till denna HLD |
+| Existing | Gap to this HLD |
 |---|---|
-| PWA med hashverifierad cache och manuellt aktiverad uppdatering; lokalt tre-i-rad i IndexedDB. | Gemensamma sessionskontrakt, sparformat och migrering för fler spel. |
-| PWA-onlineadapter med anonym auth, localStorage-utkorg och foreground-polling. | Gemensamma fel-/state machines, IndexedDB-utkorg, Retry-After/jitter, strängare formatskydd och säkra identitetsförlustflöden. |
-| Lovable tre-i-rad via validerande SQL-RPC, beständig state och dedup. | Samma motor online/lokalt, payloadbindning/stabila avslag, definierad kvitto-retention och testad serverkraschåterställning. |
-| OpenCatan `src/session` och PartyKit-adapter; delar av motorn extraherade. | Fristående state-typer/setup, full snapshot, durable receipts, komplett privata vyer, spelarhandel och naturliga fulla partier. |
-| Ursprunglig kod/tillgångar och omfattande äldre PRD. | Klarlagd licens/rättigheter; behörig distribution, kvalitetsskuld och expansionsspecifikationer. |
+| Hash-verified PWA cache, manual update activation and local IndexedDB tic-tac-toe. | Shared session contracts, save formats and migrations for more games. |
+| Online PWA adapter, anonymous auth, localStorage outbox, foreground polling. | Common lifecycle/error handling, IndexedDB outbox, strict format validation and identity-loss recovery. First client policy slice is noted below. |
+| Lovable SQL-authoritative tic-tac-toe with durable state/dedup. | Same engine online/locally, payload binding/stable rejections, receipt retention and server-crash recovery tests. |
+| OpenCatan `src/session`, PartyKit adapter and partially extracted engine. | Independent state/setup, full snapshot, durable receipts, complete private views, trading and natural full games. |
+| Original code/assets and archived PRD. | Licensing/rights, distribution permission, quality debt and expansion specifications. |
 
-### Öppna beslut före respektive releasegrind
+### Open decisions before release gates
 
-| Beslut | Underlag / grind |
+| Decision | Evidence / gate |
 |---|---|
-| ADR-01 exekveringsmiljö | Samma TS-motor, atomisk commit, concurrency/crash och kostnad i referensspelet. Före att OpenCatan flyttas online. |
-| ADR-02 identitet/inbjudan | Förlorat token, Safari/PWA-isolering, platsåterställning utan kortläcka, länkutgång. Före E1-pilot. |
-| ADR-03 driftgränser | Konkreta kvoter/payloadgränser, budgets, retention, dedupfönster, backup/RPO/RTO och ansvar. Före E1-pilot. |
-| ADR-04 regelreferens/rättigheter | Avgränsade grundregler, varianter, licensbelägg och tillgångsersättningar. Före E2-distribution. |
+| ADR-01 runtime | Same TypeScript engine, atomic commit, concurrency/crash and cost in reference game. Before moving OpenCatan online. |
+| ADR-02 identity/invitations | Token loss, Safari/PWA storage isolation, seat recovery without secrets leaking, link expiry. Before E1 pilot. |
+| ADR-03 operational limits | Concrete quotas/payload limits, budgets, retention, dedup window, backup/RPO/RTO and responsibility. Before E1 pilot. |
+| ADR-04 rule reference/rights | Scoped base rules, variants, licensing evidence and replacement assets. Before E2 distribution. |
 
-### Genomför i små steg
+### Small implementation steps
 
-1. Definiera/implementera gemensamma kontrakt och rena tillståndsövergångar i tre-i-rad, utan leverantörsbyte. Lägg till versionsfel, stabila felkoder och payloadbindning. T-03/04/09.
-2. Flytta onlineutkorg till lagringsport/IndexedDB och testa krasch före/efter commit samt auth-/lagringsfel. Behåll fungerande lokal sparning och kontrollera uppdateringskompatibilitet. T-01/02/04.
-3. Kör ADR-01-experimentet med samma motor lokalt och i en hanterad auktoritet. Testa privat dummydata innan riktiga kort. Välj leverantör utifrån körda tester, inte dokumentationsantaganden. T-04/06/08.
-4. Färdigställ ADR-02/03 och nödvändiga begränsningar/observerbarhet. Verifiera vila, två fysiska nätverk och kompatibla uppdateringar. Stäng E1-grinden.
-5. Flytta OpenCatan setup och state, därefter ett grundspelsflöde i taget till sessionen. Implementera spelarhandel och auditerade projektioner. Naturliga 3-/4-spelarpartier och rättighetsgranskning stänger E2.
-6. Capacitor/LAN och sedan Bluetooth är separata experiment i E3; samma protokoll/auktoritet/lagringskrav återanvänds. Ingen automatisk värdöverföring införs som bieffekt.
+1. Implement shared contracts and pure lifecycle transitions in tic-tac-toe without switching provider. Add version failures, stable error codes and payload binding. T-03/04/09.
+2. Move online outbox behind storage port/IndexedDB; test crash before/after commit, auth/storage errors and update compatibility. Preserve local saves. T-01/02/04.
+3. Run ADR-01 with the same engine locally and in a managed authority. Test private dummy data before real cards. Choose based on execution, not documentation assumptions. T-04/06/08.
+4. Complete ADR-02/03, limits and observability. Verify sleep, two physical networks and compatible updates; close E1.
+5. Move OpenCatan setup/state, then one base-game flow at a time. Implement player trading and audited projections. Natural 3-/4-player games and rights review close E2.
+6. Capacitor/LAN and then Bluetooth are separate E3 experiments reusing protocol/authority/storage requirements. Do not introduce automatic migration as a side effect.
 
-Varje steg ska kunna granskas, testas och släppas utan stor omskrivning. Krav och testfall i [PRD §8](../PRD.md#8-verifieringsplan-och-releasegrindar) är spårbarhetsmatris; aktuell exekveringsstatus redovisas i respektive verifieringsrapport. Detta dokument beskriver design och gap, inte nya passerade tester.
+Each step should be reviewable, testable and releasable without a large rewrite. [PRD §8](../PRD.md#8-verification-plan-and-release-gates) provides the traceability matrix. Actual execution status belongs in verification reports. This document defines design/gaps, not new passing tests.
 
-### Implementationsnotering — första delsteget
+### Implementation note: first slice
 
-PWA 1.2.1 implementerar en första ren klientpolicy för anslutning/kommandoutfall, felkoder och återförsök. Se [SESSION_STATES.md](SESSION_STATES.md) för körd verifiering och kvarstående gap. Kontrakt, backendens payloadbindning och den gemensamma motorkörningen är ännu inte färdiga; diagrammen ovan är fortsatt målspecifikation.
+PWA 1.2.1 implements a first pure client policy for connection/command outcomes, failure codes and retry. See [SESSION_STATES.md](SESSION_STATES.md) for verification/gaps. User confirmed the version works. Contracts, backend payload binding and shared rule execution remain incomplete; charts above are still target specifications.

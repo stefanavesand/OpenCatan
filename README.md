@@ -13,7 +13,7 @@ The current [PRD](PRD.md) defines staged scope, user stories, security requireme
 
 ## Installed PWA proof
 
-The independent [Spelhyllan PWA](https://stefanavesand.github.io/OpenCatan/hello/) contains a small local three-in-a-row game with IndexedDB recovery. It is separate from the OpenCatan game below. See [local game and iPad testing](docs/LOCAL_GAME.md).
+The independent [Game Shelf PWA](https://stefanavesand.github.io/OpenCatan/hello/) contains a small local three-in-a-row game with IndexedDB recovery. It is separate from the OpenCatan game below. See [local game and iPad testing](docs/LOCAL_GAME.md).
 
 ## Development status and end-to-end testing
 

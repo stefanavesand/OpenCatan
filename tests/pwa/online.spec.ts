@@ -59,31 +59,31 @@ test('two identities, lost reply survives reload, same command retries once, off
   try {
     await service.attach(x, 'player-x'); await service.attach(o, 'player-o'); await service.attach(outsider, 'third');
     const a = await x.newPage(), b = await o.newPage(), c = await outsider.newPage();
-    await a.goto(`${address}#online`); await expect(a.locator('#offline')).toHaveText('Klart för offline');
-    await a.locator('#online-create').click(); await expect(a.locator('#online-status')).toContainText('väntar på en vän');
+    await a.goto(`${address}#online`); await expect(a.locator('#offline')).toHaveText('Ready for offline');
+    await a.locator('#online-create').click(); await expect(a.locator('#online-status')).toContainText('waiting for a friend');
     const link = await a.locator('#online-link').inputValue();
-    await b.goto(link); await b.locator('#online-join-button').click(); await expect(b.locator('#online-status')).toContainText('Du är O');
-    await a.locator('#online-retry').click(); await expect(a.locator('#online-status')).toContainText('din tur');
-    await c.goto(link); await c.locator('#online-join-button').click(); await expect(c.locator('#online-error')).toContainText('redan två');
+    await b.goto(link); await b.locator('#online-join-button').click(); await expect(b.locator('#online-status')).toContainText('You are O');
+    await a.locator('#online-retry').click(); await expect(a.locator('#online-status')).toContainText('your turn');
+    await c.goto(link); await c.locator('#online-join-button').click(); await expect(c.locator('#online-error')).toContainText('already has two');
     await expect(c.locator('#online-command')).toHaveAttribute('data-state', 'rejected');
-    service.lose(); await a.getByRole('button', { name: 'Onlineruta 1, ledig', exact: true }).click();
-    await expect(a.locator('#online-error')).toContainText('Ingen kontakt');
+    service.lose(); await a.getByRole('button', { name: 'Online cell 1, empty', exact: true }).click();
+    await expect(a.locator('#online-error')).toContainText('Cannot reach');
     await expect(a.locator('#online-command')).toHaveAttribute('data-state', 'unknown'); expect(service.moves()).toBe(1);
     const intent = await a.evaluate(key => JSON.parse(localStorage.getItem(key)!).pending, stateKey);
     expect(intent.args.p_cell).toBe(0);
     await a.reload(); await expect(a.locator('#online-board')).toHaveAttribute('data-revision', '2');
     expect(service.moves()).toBe(1);
     expect(service.commands.filter(key => key.endsWith(intent.args.p_command_id))).toHaveLength(2);
-    await b.locator('#online-retry').click(); await b.getByRole('button', { name: 'Onlineruta 5, ledig', exact: true }).click();
+    await b.locator('#online-retry').click(); await b.getByRole('button', { name: 'Online cell 5, empty', exact: true }).click();
     await expect(b.locator('#online-board')).toHaveAttribute('data-revision', '3');
     await a.locator('#online-retry').click(); await expect(a.locator('#online-board')).toHaveAttribute('data-revision', '3');
-    await x.setOffline(true); await expect(a.locator('#online-connection')).toContainText('pausat');
-    await expect(a.getByRole('button', { name: 'Onlineruta 2, ledig', exact: true })).toBeDisabled();
-    await a.reload(); await expect(a.locator('#online-connection')).toContainText('pausat');
+    await x.setOffline(true); await expect(a.locator('#online-connection')).toContainText('paused');
+    await expect(a.getByRole('button', { name: 'Online cell 2, empty', exact: true })).toBeDisabled();
+    await a.reload(); await expect(a.locator('#online-connection')).toContainText('paused');
     await x.setOffline(false); await expect(a.locator('#online-board')).toHaveAttribute('data-revision', '3');
-    await expect(a.getByRole('button', { name: 'Onlineruta 2, ledig', exact: true })).toBeEnabled();
+    await expect(a.getByRole('button', { name: 'Online cell 2, empty', exact: true })).toBeEnabled();
     // Local pass-and-play stays separate from remote state.
-    await a.goto(`${address}#tre-i-rad`); await expect(a.locator('#board')).toHaveAttribute('data-revision', '0');
+    await a.goto(`${address}#tic-tac-toe`); await expect(a.locator('#board')).toHaveAttribute('data-revision', '0');
   } finally { await Promise.all([x.close(), o.close(), outsider.close()]); }
 });
 
@@ -97,7 +97,7 @@ test('expired identity is retained when refresh fails; no replacement signup', a
   });
   await page.goto(`${address}#online`);
   await page.locator('#online-create').click();
-  await expect(page.locator('#online-error')).toContainText('inloggning kunde inte bekräftas');
+  await expect(page.locator('#online-error')).toContainText('sign-in could not be verified');
   expect(signups).toBe(0);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('spelhyllan-online-auth-v1')!).user.id)).toBe('old-player');
 });
@@ -115,7 +115,7 @@ test('429 waits for Retry-After without dropping or changing the command', async
   const before = service.requests.length;
   await page.clock.runFor(19000); expect(service.requests.length).toBe(before);
   await page.clock.runFor(2000);
-  await expect(page.locator('#online-status')).toContainText('väntar på en vän');
+  await expect(page.locator('#online-status')).toContainText('waiting for a friend');
   expect(service.commands[0]).toBe(`player-x:${intent.args.p_command_id}`);
   await expect(page.locator('#online-command')).toHaveAttribute('data-state', 'accepted');
 });
@@ -139,4 +139,34 @@ test('missing saved room stops polling instead of reconnecting forever', async (
   await expect(page.locator('#online-connection')).toHaveAttribute('data-state', 'closed');
   const before = service.requests.length;
   await page.clock.runFor(120000); expect(service.requests.length).toBe(before);
+});
+
+test('English UI preserves legacy local saves, player identity and bookmarked route', async ({ page, context }) => {
+  const service = fakeBackend(); await service.attach(context, 'existing-player');
+  await page.goto(address);
+  await page.evaluate(async () => {
+    localStorage.setItem('spelhyllan-online-auth-v1', JSON.stringify({ access_token: 'existing-player', refresh_token: 'existing-refresh', user: { id: 'existing-player' }, expires_at: 9999999999 }));
+    localStorage.setItem('spelhyllan-online-state-v1', JSON.stringify({ schemaVersion: 1, roomId: null, pending: null }));
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open('spelhyllan', 1);
+      request.onsuccess = () => {
+        const db = request.result; const tx = db.transaction('sessions', 'readwrite');
+        tx.objectStore('sessions').put({ schemaVersion: 1, game: 'tic-tac-toe', id: 'previous-game', revision: 2, moves: [0, 4], savedAt: 1000 }, 'current');
+        tx.oncomplete = () => { db.close(); resolve(); }; tx.onabort = () => reject(tx.error);
+      };
+    });
+  });
+  // Keep previously shared links working while new navigation uses English.
+  await page.goto(`${address}#tre-i-rad`); await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.locator('#board')).toHaveAttribute('data-revision', '2');
+  await expect(page.getByRole('button', { name: 'Cell 1, X', exact: true })).toBeDisabled();
+  await expect(page.locator('#game-status')).toHaveText('X to move');
+  await expect(page).toHaveTitle('Tic-tac-toe · Game Shelf');
+  const manifest = await (await page.request.get(`${address}manifest.webmanifest`)).json();
+  expect(manifest).toMatchObject({ lang: 'en', name: 'Game Shelf', id: './', scope: './' });
+  await page.goto(`${address}#online`); await page.locator('#online-create').click();
+  await expect(page.locator('#online-status')).toContainText('You are X');
+  expect(service.requests.some(path => path.startsWith('/auth/'))).toBe(false);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('spelhyllan-online-auth-v1')!).user.id)).toBe('existing-player');
 });

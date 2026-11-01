@@ -10,10 +10,10 @@ async function populate(repair = false) {
   const results = await Promise.allSettled(ASSETS.map(async asset => {
     if (repair && await valid(await cache.match(url(asset.path)), asset.hash)) return;
     const response = await fetch(url(asset.path), { cache: 'no-store', credentials: 'same-origin' });
-    if (!await valid(response, asset.hash)) throw new Error(`Filkontrollen misslyckades: ${asset.path}`);
+    if (!await valid(response, asset.hash)) throw new Error(`File verification failed: ${asset.path}`);
     await cache.put(url(asset.path), response);
   }));
-  if (results.some(r => r.status === 'rejected')) throw new Error('Offlinepaketet kunde inte hämtas komplett. Anslut nätet och försök igen.');
+  if (results.some(r => r.status === 'rejected')) throw new Error('The offline package could not be fully downloaded. Connect to the internet and try again.');
 }
 async function verify() {
   const cache = await caches.open(CACHE);

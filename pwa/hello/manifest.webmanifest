@@ -1,9 +1,9 @@
 {
   "id": "./",
-  "name": "Spelhyllan",
-  "short_name": "Spelhyllan",
-  "description": "Lokala spel att spela tillsammans, även utan nät.",
-  "lang": "sv",
+  "name": "Game Shelf",
+  "short_name": "Game Shelf",
+  "description": "Local games to play together, even offline.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

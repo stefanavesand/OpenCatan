@@ -49,6 +49,6 @@ async function inventory(directory, prefix = './') {
 }
 await inventory(path.join(output, 'hello'));
 await writeFile(path.join(output, 'hello', 'sw.js'), template.replaceAll('__BUILD_ID__', buildId).replace('__ASSETS__', JSON.stringify(assets)));
-await writeFile(path.join(output, 'index.html'), '<!doctype html><html lang="sv"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=./hello/"><title>Hello iPad</title><a href="./hello/">Öppna Hello iPad</a></html>\n');
+await writeFile(path.join(output, 'index.html'), '<!doctype html><html lang="en"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=./hello/"><title>Game Shelf</title><a href="./hello/">Open Game Shelf</a></html>\n');
 await writeFile(path.join(output, '.nojekyll'), '');
 process.stdout.write(`PWA ${version}, build ${buildId}: ${assets.length} verified assets → ${output}\n`);

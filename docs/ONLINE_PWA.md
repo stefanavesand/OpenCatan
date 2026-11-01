@@ -3,14 +3,16 @@
 The installed PWA stays at https://stefanavesand.github.io/OpenCatan/hello/ .
 The separate managed backend project is https://lovable.dev/projects/cdbab9d4-9c51-4ab0-89d9-feb24af9b7ce . Its first build cost 5.8 Lovable credits. This integration was written locally, without sending further Lovable build requests.
 
+UI labels below use the English wording introduced in 1.2.2. Original 1.2.0 labels were Swedish.
+
 ## Try it on two devices
 
-1. Open the installed app with internet, accept **Installera uppdatering**, check version 1.2.0.
-2. Choose **Spela online**, then **Skapa rum**. Copy the invitation link.
-3. Open that link on a second device/browser and choose **Gå med**. The creator is X and the joiner O. No login form.
+1. Open the installed app with internet, accept **Install update**, check version 1.2.0.
+2. Choose **Play online**, then **Create room**. Copy the invitation link.
+3. Open that link on a second device/browser and choose **Join room**. The creator is X and the joiner O. No login form.
 4. Take turns; the other device sees updates within about five seconds.
 5. Disconnect one device, then reconnect/reopen. The same browser identity recovers the saved room. Try devices on separate networks as well.
-6. Local **Spela tre i rad** remains available without internet, with its existing separate IndexedDB save.
+6. Local **Play tic-tac-toe** remains available without internet, with its existing separate IndexedDB save.
 
 Opening a link in Safari and opening an installed iPad web app may use different browser storage. Return via the same browser/app that joined the room. Clearing site data loses the anonymous identity and access to its rooms. There is no account linking or identity export yet.
 

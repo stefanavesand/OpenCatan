@@ -10,12 +10,12 @@ export function createGame(id, savedAt) {
   return validateGame({ schemaVersion: 1, game: 'tic-tac-toe', id, revision: 0, moves: [], savedAt });
 }
 export function validateGame(value) {
-  if (!value || value.schemaVersion !== 1 || value.game !== 'tic-tac-toe') throw new Error('Sparningens format stöds inte av denna version. Ingen sparning har ändrats.');
+  if (!value || value.schemaVersion !== 1 || value.game !== 'tic-tac-toe') throw new Error('This save format is not supported by this version. No saved data has been changed.');
   if (typeof value.id !== 'string' || !value.id.length || value.id.length > 100 || !Array.isArray(value.moves) || value.moves.length > 9
-    || value.revision !== value.moves.length || !Number.isSafeInteger(value.savedAt) || value.savedAt < 0 || value.savedAt > 8640000000000000) throw new Error('Sparningen är skadad. Ingen sparning har ändrats.');
+    || value.revision !== value.moves.length || !Number.isSafeInteger(value.savedAt) || value.savedAt < 0 || value.savedAt > 8640000000000000) throw new Error('The save is corrupted. No saved data has been changed.');
   const checked = [];
   for (const cell of value.moves) {
-    if (!Number.isInteger(cell) || cell < 0 || cell > 8 || checked.includes(cell) || position(checked).winner) throw new Error('Sparningen innehåller ogiltiga drag.');
+    if (!Number.isInteger(cell) || cell < 0 || cell > 8 || checked.includes(cell) || position(checked).winner) throw new Error('The save contains invalid moves.');
     checked.push(cell);
   }
   return { schemaVersion: 1, game: 'tic-tac-toe', id: value.id, revision: checked.length, moves: checked, savedAt: value.savedAt };
@@ -23,8 +23,8 @@ export function validateGame(value) {
 export function move(game, cell, savedAt) {
   const valid = validateGame(game);
   const current = position(valid.moves);
-  if (current.winner || current.draw) throw new Error('Partiet är avslutat.');
-  if (!Number.isInteger(cell) || cell < 0 || cell > 8 || current.board[cell]) throw new Error('Välj en ledig ruta.');
+  if (current.winner || current.draw) throw new Error('The game has ended.');
+  if (!Number.isInteger(cell) || cell < 0 || cell > 8 || current.board[cell]) throw new Error('Choose an empty cell.');
   return validateGame({ ...valid, moves: [...valid.moves, cell], revision: valid.revision + 1, savedAt });
 }
 export function sameRevision(a, b) { return a === null ? b === null : !!b && a.id === b.id && a.revision === b.revision; }
