@@ -6,7 +6,7 @@ let ready = false;
 let pending = null;
 const el = id => document.getElementById(id);
 function route() {
-  const name = location.hash === '#tre-i-rad' ? 'game' : location.hash === '#hello' ? 'hello' : 'library';
+  const name = location.hash.startsWith('#online') ? 'online' : location.hash === '#tre-i-rad' ? 'game' : location.hash === '#hello' ? 'hello' : 'library';
   for (const section of document.querySelectorAll('[data-view]')) section.hidden = section.dataset.view !== name;
   document.title = name === 'game' ? 'Tre i rad · Spelhyllan' : name === 'hello' ? 'Hello iPad' : 'Spelhyllan';
   el('app-home').setAttribute('aria-current', name === 'library' ? 'page' : 'false');

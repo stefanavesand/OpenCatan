@@ -17,14 +17,15 @@
 </head>
 <body>
   <main>
-    <header><span class="mark" aria-hidden="true">H</span><a id="app-home" href="#library">SPELHYLLAN</a><span class="version">v1.1.0</span></header>
+    <header><span class="mark" aria-hidden="true">H</span><a id="app-home" href="#library">SPELHYLLAN</a><span class="version">v1.2.0</span></header>
     <section data-view="library">
       <div class="hero"><p class="eyebrow">Lite tid tillsammans.</p><h1>Din spelhylla<span>.</span></h1>
       <p class="intro">Välj ett spel och slå er ner.<br>Det senaste partiet väntar kvar här.</p></div>
       <article class="game-card">
         <div class="mini-board" aria-hidden="true"><span>X</span><span>O</span><span></span><span></span><span>X</span><span></span><span>O</span><span></span><span>X</span></div>
         <div><p class="eyebrow">FÖR TVÅ PÅ SAMMA ENHET</p><h2>Tre i rad</h2><p id="resume-note">Två spelare · samma iPad · utan nät</p>
-        <a class="button" id="play-game" href="#tre-i-rad">Spela tre i rad</a></div>
+        <a class="button" id="play-game" href="#tre-i-rad">Spela tre i rad</a>
+        <a class="button secondary" href="#online">Spela online</a></div>
       </article>
       <p class="coming">Fler brädspel kommer. Här börjar vi med ett litet parti tillsammans.</p>
       <a class="quiet-link" href="#hello">Öppna Hello world-testet →</a>
@@ -50,6 +51,25 @@
         <p>Partiet sparas på denna enhet efter varje drag. En kopia ger extra skydd om webbläsardata rensas.</p>
       </details>
     </section>
+    <section data-view="online" hidden>
+      <a class="quiet-link back" href="#library">← Till spelhyllan</a>
+      <div class="hero game-hero"><p class="eyebrow">TVÅ ENHETER · VIA INTERNET</p><h1>Tre i rad online<span>.</span></h1>
+      <p class="intro">Skapa ett rum och dela länken med en vän. Båda behöver internet.</p></div>
+      <div class="online-controls">
+        <button id="online-create" type="button">Skapa rum</button>
+        <form id="online-join"><label for="online-room-input">Rums-ID från din vän</label><input id="online-room-input" autocomplete="off" spellcheck="false" required><button type="submit" id="online-join-button">Gå med</button></form>
+        <div id="online-replace" class="confirmation" hidden><p>Byta rum på den här enheten? Det gamla partiet finns kvar via sin länk.</p><button id="online-replace-yes" type="button">Ja, byt rum</button> <button id="online-replace-no" class="secondary" type="button">Behåll rummet</button></div>
+      </div>
+      <div class="game-surface">
+        <h2 id="online-status" role="status" aria-live="polite">Skapa eller gå med i ett rum.</h2>
+        <p id="online-connection" role="status"></p>
+        <div id="online-board" class="tic-board" role="group" aria-label="Spelplan online, tre gånger tre"></div>
+        <p id="online-error" class="save-error" role="alert"></p>
+        <button id="online-retry" class="secondary" type="button">Anslut igen</button>
+        <div id="online-share" hidden><label for="online-link">Dela den här länken med din vän</label><input id="online-link" readonly><button id="online-copy" class="secondary" type="button">Kopiera länk</button><p id="online-copy-status" role="status"></p></div>
+      </div>
+      <p class="coming">Onlinepartiet sparas hos speltjänsten efter varje godkänt drag. Vid avbrott pausas spelandet tills anslutningen är tillbaka. Behåll webbläsardata för att återvända som samma spelare. Lokalt spel finns kvar separat.</p>
+    </section>
     <section class="hero" data-view="hello" hidden>
       <p class="eyebrow">Hej, iPad.</p>
       <h1>Hello world<span>.</span></h1>
@@ -74,7 +94,7 @@
       </ol>
       <p>Om valet finns: låt <strong>Öppna som webbapp</strong> vara aktiverat.</p>
     </aside>
-    <footer>Spelhyllan · Version 1.1.0 · <span id="build">287a6e2147b6</span></footer>
+    <footer>Spelhyllan · Version 1.2.0 · <span id="build">094f2045f703</span></footer>
   </main>
 </body>
 </html>
