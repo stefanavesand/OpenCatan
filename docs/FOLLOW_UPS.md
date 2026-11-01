@@ -13,4 +13,6 @@ Local tracking for this implementation. The repository requests the `bd` CLI in 
 
 - GAMEPLAY-1: Extend the scenario-based progression tests to naturally generated complete games and four-player sessions. Expand road tie/branch and resource-shortage edge cases.
 
-- PWA-1: Verify Spelhyllan 1.1.0 game recovery on the actual iPad. Cache/update/IndexedDB recovery is automated in Chromium; device test remains pending. Future work includes standalone domain/session integration for OpenCatan, history, schema migrations and cross-device transport.
+- PWA-1 (verified): User confirmed Spelhyllan 1.1.0 game recovery on the actual iPad. Cache/update/IndexedDB recovery is also automated in Chromium. Future work includes standalone domain/session integration for OpenCatan, history, schema migrations and cross-device transport.
+
+- ONLINE-1: Verify 1.2.0 on two physical devices and separate networks, including suspend/reopen. Add room/user cleanup, abuse/rate/cost controls, identity recovery/linking, payload-bound dedup and future-schema validation. Replace duplicated SQL/TS rules before extending this backend to OpenCatan; managed transport choice remains replaceable.

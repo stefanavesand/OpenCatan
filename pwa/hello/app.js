@@ -1,4 +1,5 @@
 import { mountLibrary, prepareForUpdate } from './library.js';
+import { mountOnline, prepareOnlineUpdate } from './online.js';
 const BUILD_ID = '__BUILD_ID__';
 const offline = document.querySelector('#offline');
 const detail = document.querySelector('#detail');
@@ -70,10 +71,11 @@ update.addEventListener('click', async () => {
   if (!registration?.waiting) return;
   update.disabled = true;
   await prepareForUpdate();
+  await prepareOnlineUpdate();
   reloadForUpdate = true;
   registration.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
 });
 navigator.serviceWorker?.addEventListener('controllerchange', () => { if (reloadForUpdate) window.location.reload(); });
 window.addEventListener('online', showNetwork); window.addEventListener('offline', showNetwork);
 window.matchMedia('(display-mode: standalone)').addEventListener('change', showDisplay);
-mountLibrary(); showNetwork(); showDisplay(); start();
+mountLibrary(); mountOnline(); showNetwork(); showDisplay(); start();

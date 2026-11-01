@@ -178,3 +178,5 @@ First player to reach 10 victory points wins.
 MIT License
 
 *Settlers of Catan is a trademark of Catan GmbH. This is a fan-made project not affiliated with or endorsed by Catan GmbH.*
+
+Internet multiplayer PWA prototype: [setup, testing and limitations](docs/ONLINE_PWA.md).
