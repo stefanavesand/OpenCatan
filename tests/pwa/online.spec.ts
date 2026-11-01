@@ -8,6 +8,8 @@ function fakeBackend() {
   let room: Room | null = null, count = 0, loseReply = false;
   const receipts = new Map<string, unknown>();
   const commands: string[] = [];
+  const requests: string[] = [];
+  let failure: { path: string; status: number; headers: Record<string, string>; body: unknown } | null = null;
   async function attach(context: BrowserContext, player: string) {
     await context.route(`${backend}/**`, async route => {
       const request = route.request();
@@ -15,6 +17,11 @@ function fakeBackend() {
       if (request.method() === 'OPTIONS') { await route.fulfill({ status: 204, headers }); return; }
       const path = new URL(request.url()).pathname;
       const args = request.postDataJSON();
+      requests.push(path);
+      if (failure && path.endsWith(failure.path)) {
+        const next = failure; failure = null;
+        await route.fulfill({ status: next.status, json: next.body, headers: { ...headers, ...next.headers } }); return;
+      }
       let body: unknown;
       const fail = (code: string) => ({ ok: false, error: { code } });
       const view = () => ({ ...room, you: room?.playerX === player ? 'X' : 'O' });
@@ -43,7 +50,7 @@ function fakeBackend() {
       await route.fulfill({ json: body, headers });
     });
   }
-  return { attach, lose: () => { loseReply = true; }, moves: () => count, commands };
+  return { attach, lose: () => { loseReply = true; }, moves: () => count, commands, requests, failOnce: (path: string, status: number, headers: Record<string, string> = {}, body: unknown = {}) => { failure = { path, status, headers, body }; } };
 }
 
 test('two identities, lost reply survives reload, same command retries once, offline pauses', async ({ browser }) => {
@@ -58,8 +65,10 @@ test('two identities, lost reply survives reload, same command retries once, off
     await b.goto(link); await b.locator('#online-join-button').click(); await expect(b.locator('#online-status')).toContainText('Du är O');
     await a.locator('#online-retry').click(); await expect(a.locator('#online-status')).toContainText('din tur');
     await c.goto(link); await c.locator('#online-join-button').click(); await expect(c.locator('#online-error')).toContainText('redan två');
+    await expect(c.locator('#online-command')).toHaveAttribute('data-state', 'rejected');
     service.lose(); await a.getByRole('button', { name: 'Onlineruta 1, ledig', exact: true }).click();
-    await expect(a.locator('#online-error')).toContainText('Ingen kontakt'); expect(service.moves()).toBe(1);
+    await expect(a.locator('#online-error')).toContainText('Ingen kontakt');
+    await expect(a.locator('#online-command')).toHaveAttribute('data-state', 'unknown'); expect(service.moves()).toBe(1);
     const intent = await a.evaluate(key => JSON.parse(localStorage.getItem(key)!).pending, stateKey);
     expect(intent.args.p_cell).toBe(0);
     await a.reload(); await expect(a.locator('#online-board')).toHaveAttribute('data-revision', '2');
@@ -91,4 +100,43 @@ test('expired identity is retained when refresh fails; no replacement signup', a
   await expect(page.locator('#online-error')).toContainText('inloggning kunde inte bekräftas');
   expect(signups).toBe(0);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('spelhyllan-online-auth-v1')!).user.id)).toBe('old-player');
+});
+
+test('429 waits for Retry-After without dropping or changing the command', async ({ page, context }) => {
+  const service = fakeBackend(); await service.attach(context, 'player-x');
+  await page.clock.install();
+  await page.goto(`${address}#online`);
+  service.failOnce('v1_create_room', 429, { 'retry-after': '20', 'access-control-expose-headers': 'Retry-After' });
+  await page.locator('#online-create').click();
+  await expect(page.locator('#online-connection')).toHaveAttribute('data-state', 'backoff');
+  await expect(page.locator('#online-command')).toHaveAttribute('data-state', 'unknown');
+  await expect(page.locator('#online-retry')).toBeDisabled();
+  const intent = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).pending, stateKey);
+  const before = service.requests.length;
+  await page.clock.runFor(19000); expect(service.requests.length).toBe(before);
+  await page.clock.runFor(2000);
+  await expect(page.locator('#online-status')).toContainText('väntar på en vän');
+  expect(service.commands[0]).toBe(`player-x:${intent.args.p_command_id}`);
+  await expect(page.locator('#online-command')).toHaveAttribute('data-state', 'accepted');
+});
+
+for (const response of [{ ok: true, apiVersion: 99, room: {} }, { ok: false, error: { code: 'future_unknown_error' } }])
+test(`incompatible API response preserves intent and stops automatic retry: ${JSON.stringify(response)}`, async ({ page, context }) => {
+  const service = fakeBackend(); await service.attach(context, 'player-x');
+  await page.clock.install(); await page.goto(`${address}#online`);
+  service.failOnce('v1_create_room', 200, {}, response);
+  await page.locator('#online-create').click();
+  await expect(page.locator('#online-connection')).toHaveAttribute('data-state', 'version-blocked');
+  const before = service.requests.length;
+  await page.clock.runFor(120000); expect(service.requests.length).toBe(before);
+  expect(await page.evaluate(key => !!JSON.parse(localStorage.getItem(key)!).pending, stateKey)).toBe(true);
+});
+
+test('missing saved room stops polling instead of reconnecting forever', async ({ page, context }) => {
+  const service = fakeBackend(); await service.attach(context, 'player-x');
+  await page.addInitScript(({ key, room }) => localStorage.setItem(key, JSON.stringify({ schemaVersion: 1, roomId: room, pending: null })), { key: stateKey, room: roomId });
+  await page.clock.install(); await page.goto(`${address}#online`);
+  await expect(page.locator('#online-connection')).toHaveAttribute('data-state', 'closed');
+  const before = service.requests.length;
+  await page.clock.runFor(120000); expect(service.requests.length).toBe(before);
 });

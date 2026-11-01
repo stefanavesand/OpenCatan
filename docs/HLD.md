@@ -307,3 +307,7 @@ Ingen stor lasttestning mot fungerande produktion. Använd isolerad miljö och b
 6. Capacitor/LAN och sedan Bluetooth är separata experiment i E3; samma protokoll/auktoritet/lagringskrav återanvänds. Ingen automatisk värdöverföring införs som bieffekt.
 
 Varje steg ska kunna granskas, testas och släppas utan stor omskrivning. Krav och testfall i [PRD §8](../PRD.md#8-verifieringsplan-och-releasegrindar) är spårbarhetsmatris; aktuell exekveringsstatus redovisas i respektive verifieringsrapport. Detta dokument beskriver design och gap, inte nya passerade tester.
+
+### Implementationsnotering — första delsteget
+
+PWA 1.2.1 implementerar en första ren klientpolicy för anslutning/kommandoutfall, felkoder och återförsök. Se [SESSION_STATES.md](SESSION_STATES.md) för körd verifiering och kvarstående gap. Kontrakt, backendens payloadbindning och den gemensamma motorkörningen är ännu inte färdiga; diagrammen ovan är fortsatt målspecifikation.
