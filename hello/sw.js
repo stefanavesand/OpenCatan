@@ -1,7 +1,7 @@
-const BUILD_ID = '5985bc3b5561';
+const BUILD_ID = '6551dbe9609a';
 const PREFIX = `hello-pwa:${new URL(self.registration.scope).pathname}:`;
 const CACHE = `${PREFIX}${BUILD_ID}`;
-const ASSETS = [{"path":"./app.js","hash":"cf4f4fb2f729ef8d7d423c89a5422cca34e709bca16bab5afe7b1efd2d405c96"},{"path":"./game.js","hash":"45eec260f183d2f39f043b9f502d1ce340c6d037ff8d626e40214a66bebf0fe7"},{"path":"./icons/apple-touch-icon.png","hash":"79514ad8c965354ee75bb6a7e45f27f2fd3fcea567c8448c39fe4720eaa095a4"},{"path":"./icons/icon-192.png","hash":"2a34b19737afae8a4abdf910895031fcbc76908b3e30ae3cb08689dd2e584c2c"},{"path":"./icons/icon-512.png","hash":"2133054c1f79ab8bce24a11a07e17a7237ef253325e08bb1eecebb9b6624b0d7"},{"path":"./index.html","hash":"1e93b30dc1f297db708cb9b2b965e03cf26e19195c6c0ad5e53262aee70bb339"},{"path":"./library.js","hash":"985e20a7bc967a0a2d018279a671482d53ca5c7323cfdd5cea89351676553cdb"},{"path":"./manifest.webmanifest","hash":"60b380149432f3820d4f7152b170d19fce71c00ec368f022b47491ec8b3a545d"},{"path":"./online-transport.js","hash":"25182ee3af09b4b2202f2213331d92e1c34e308417d3c2bd9ae44ba7f3776c37"},{"path":"./online.js","hash":"5f90079d58bca7b45106e865aba786f5e238b1d936bde65567115f04e9e37261"},{"path":"./session-state.js","hash":"82596392f14417f6e8420bd4115fa60cfd2de26692cf6f0fadafdee7cc68250c"},{"path":"./storage.js","hash":"31554fb2fb0ab20383cbf01e2ff6e9626f85a71897dfe85a38980c3117d61619"},{"path":"./style.css","hash":"70da696b014d113aa964de4dec84fefa6a1dd0828803700371edb61bf9c8b022"}];
+const ASSETS = [{"path":"./app.js","hash":"c6473470327b99fc62d6c750e3148f062ecbf8872fe0ca9a1ec2a792e3c1e51a"},{"path":"./game.js","hash":"b055118d84cd732debf49c098355d1c903837fd5bcaa62db3826d245d647f748"},{"path":"./icons/apple-touch-icon.png","hash":"79514ad8c965354ee75bb6a7e45f27f2fd3fcea567c8448c39fe4720eaa095a4"},{"path":"./icons/icon-192.png","hash":"2a34b19737afae8a4abdf910895031fcbc76908b3e30ae3cb08689dd2e584c2c"},{"path":"./icons/icon-512.png","hash":"2133054c1f79ab8bce24a11a07e17a7237ef253325e08bb1eecebb9b6624b0d7"},{"path":"./index.html","hash":"298b3846028f0c9e77ad30b60770c119aa4deb74daec8180705e121b646c8226"},{"path":"./library.js","hash":"ce65df443b4b44d683c17739a95f17792d1139003460cd2a66009694c36702a6"},{"path":"./manifest.webmanifest","hash":"3ebbe811eb92bd0233f664f7e0a7a182a7ec7e819a439ce08030271e43c5b137"},{"path":"./online-transport.js","hash":"87858d5c81e2078ce1c1751029a9aa5b8ac051ebdd78b6fe8460e28a5a138c76"},{"path":"./online.js","hash":"3de4c3a2125cc971696071709a3e5429c63633cbcec22c796116cb5d00b3a18f"},{"path":"./session-state.js","hash":"82596392f14417f6e8420bd4115fa60cfd2de26692cf6f0fadafdee7cc68250c"},{"path":"./storage.js","hash":"d456fe2c8d4d5e60eadd78f00e6858ef61e41a836eef37f5fa96c6ce28d4f667"},{"path":"./style.css","hash":"70da696b014d113aa964de4dec84fefa6a1dd0828803700371edb61bf9c8b022"}];
 const url = path => new URL(path, self.registration.scope).href;
 const digest = async response => [...new Uint8Array(await crypto.subtle.digest('SHA-256', await response.arrayBuffer()))].map(n => n.toString(16).padStart(2, '0')).join('');
 async function valid(response, hash) { return !!response && response.ok && await digest(response.clone()) === hash; }
@@ -10,10 +10,10 @@ async function populate(repair = false) {
   const results = await Promise.allSettled(ASSETS.map(async asset => {
     if (repair && await valid(await cache.match(url(asset.path)), asset.hash)) return;
     const response = await fetch(url(asset.path), { cache: 'no-store', credentials: 'same-origin' });
-    if (!await valid(response, asset.hash)) throw new Error(`Filkontrollen misslyckades: ${asset.path}`);
+    if (!await valid(response, asset.hash)) throw new Error(`File verification failed: ${asset.path}`);
     await cache.put(url(asset.path), response);
   }));
-  if (results.some(r => r.status === 'rejected')) throw new Error('Offlinepaketet kunde inte hämtas komplett. Anslut nätet och försök igen.');
+  if (results.some(r => r.status === 'rejected')) throw new Error('The offline package could not be fully downloaded. Connect to the internet and try again.');
 }
 async function verify() {
   const cache = await caches.open(CACHE);

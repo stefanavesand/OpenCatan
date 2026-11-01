@@ -5,7 +5,7 @@ function openDatabase() {
     const request = indexedDB.open('spelhyllan', 1);
     request.onupgradeneeded = () => request.result.createObjectStore('sessions');
     request.onerror = () => reject(request.error);
-    request.onblocked = () => reject(new Error('Stäng andra fönster med appen och försök igen.'));
+    request.onblocked = () => reject(new Error('Close other app windows and try again.'));
     request.onsuccess = () => {
       const db = request.result;
       db.onversionchange = () => db.close();
@@ -23,7 +23,7 @@ export async function loadGame() {
       db.close();
       try { resolve(request.result === undefined ? null : validateGame(request.result)); } catch (error) { reject(error); }
     };
-    tx.onabort = () => { db.close(); reject(tx.error || new Error('Sparningen kunde inte läsas.')); };
+    tx.onabort = () => { db.close(); reject(tx.error || new Error('The saved game could not be loaded.')); };
   });
 }
 /** Compare and write inside one transaction. A second tab cannot overwrite a
@@ -40,12 +40,12 @@ export async function saveGame(game, expected) {
     request.onsuccess = () => {
       try {
         const actual = request.result === undefined ? null : validateGame(request.result);
-        if (!sameRevision(expected, actual)) throw new ConflictError('Partiet har ändrats i ett annat fönster. Den senaste sparningen har lästs in.');
-        if (actual && valid.id === actual.id && (valid.revision !== actual.revision + 1 || actual.moves.some((cell, i) => valid.moves[i] !== cell))) throw new Error('Sparningen måste lägga till exakt ett drag.');
+        if (!sameRevision(expected, actual)) throw new ConflictError('The game changed in another window. The latest save has been loaded.');
+        if (actual && valid.id === actual.id && (valid.revision !== actual.revision + 1 || actual.moves.some((cell, i) => valid.moves[i] !== cell))) throw new Error('A save must append exactly one move.');
         store.put(valid, 'current');
       } catch (error) { failure = error; tx.abort(); }
     };
     tx.oncomplete = () => { db.close(); resolve(valid); };
-    tx.onabort = () => { db.close(); reject(failure || tx.error || new Error('Partiet kunde inte sparas.')); };
+    tx.onabort = () => { db.close(); reject(failure || tx.error || new Error('The game could not be saved.')); };
   });
 }

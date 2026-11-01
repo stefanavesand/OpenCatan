@@ -22,9 +22,9 @@ function render() {
   const pending = pendingIntent();
   el('online-connection').dataset.state = session.connection;
   el('online-command').dataset.state = session.command;
-  el('online-command').textContent = ({ idle: '', sending: 'Väntar på besked från speltjänsten…', unknown: 'Utfallet är okänt. Samma kommando kontrolleras igen; gör inget nytt drag ännu.', accepted: 'Kommandot är godkänt och sparat hos speltjänsten.', rejected: 'Kommandot avvisades. Det har inte genomförts.', 'not-sent': 'Kommandot har inte skickats.' })[session.command];
-  el('online-status').textContent = !room ? 'Skapa eller gå med i ett rum.' : room.status === 'waiting' ? 'Du är X · väntar på en vän' : room.status === 'draw' ? 'Oavgjort!' : room.status.endsWith('_won') ? `${room.status === 'x_won' ? 'X' : 'O'} vann!` : `Du är ${room.you} · ${room.nextTurn === room.you ? 'din tur' : 'väntar på motspelaren'}`;
-  el('online-connection').textContent = !navigator.onLine ? 'Ingen nätanslutning · onlinepartiet är pausat' : busy ? 'Kontaktar speltjänsten…' : session.connection === 'backoff' ? 'Väntar före nästa anslutningsförsök…' : session.connection === 'auth-blocked' ? 'Anslutningen är stoppad tills spelarens inloggning kan bekräftas.' : session.connection === 'version-blocked' ? 'Appen behöver en kompatibel uppdatering. Sparade uppgifter har behållits.' : session.connection === 'closed' ? 'Rummet kan inte öppnas med denna spelaridentitet.' : !connected() && room ? 'Anslut igen för att hämta senaste spelplanen' : pending ? 'Ett kommando väntar på bekräftelse. Anslut igen.' : room ? `Sparat hos speltjänsten · uppdateras var femte sekund · steg ${room.revision}` : 'Internet krävs för onlinepartier';
+  el('online-command').textContent = ({ idle: '', sending: 'Waiting for a response from the game service…', unknown: 'The outcome is unknown. The same command will be checked again; do not make another move yet.', accepted: 'The command has been accepted and saved by the game service.', rejected: 'The command was rejected. It has not been carried out.', 'not-sent': 'The command has not been sent.' })[session.command];
+  el('online-status').textContent = !room ? 'Create or join a room.' : room.status === 'waiting' ? 'You are X · waiting for a friend' : room.status === 'draw' ? 'Draw!' : room.status.endsWith('_won') ? `${room.status === 'x_won' ? 'X' : 'O'} wins!` : `You are ${room.you} · ${room.nextTurn === room.you ? 'your turn' : 'waiting for your opponent'}`;
+  el('online-connection').textContent = !navigator.onLine ? 'No network connection · online play is paused' : busy ? 'Contacting the game service…' : session.connection === 'backoff' ? 'Waiting before the next connection attempt…' : session.connection === 'auth-blocked' ? 'The connection is blocked until the player sign-in can be verified.' : session.connection === 'version-blocked' ? 'The app needs a compatible update. Saved data has been kept.' : session.connection === 'closed' ? 'The room cannot be opened with this player identity.' : !connected() && room ? 'Reconnect to load the latest board' : pending ? 'A command is awaiting confirmation. Reconnect.' : room ? `Saved by the game service · updates every five seconds · revision ${room.revision}` : 'Online games require internet access';
   el('online-board').dataset.revision = String(room?.revision ?? 0);
   const winning = room && room.status.endsWith('_won') ? WIN_LINES.find(line => line.every(cell => room.board[cell] === (room.status === 'x_won' ? 'X' : 'O'))) || [] : [];
   [...el('online-board').children].forEach((button, cell) => {
@@ -32,7 +32,7 @@ function render() {
     button.textContent = mark === '.' ? '' : mark;
     button.dataset.mark = mark === '.' ? '' : mark;
     button.classList.toggle('winning', winning.includes(cell));
-    button.setAttribute('aria-label', `Onlineruta ${cell + 1}${mark === '.' ? ', ledig' : `, ${mark}`}`);
+    button.setAttribute('aria-label', `Online cell ${cell + 1}${mark === '.' ? ', empty' : `, ${mark}`}`);
     button.disabled = !connected() || !!busy || pending || !room || room.status !== 'playing' || room.nextTurn !== room.you || mark !== '.';
   });
   for (const id of ['online-create', 'online-join-button']) el(id).disabled = !!busy || pending || !navigator.onLine || !canAttempt(session, Date.now(), true);
@@ -99,15 +99,15 @@ export function mountOnline() {
   el('online-create').onclick = () => request('create_room');
   el('online-join').onsubmit = event => {
     event.preventDefault(); const id = el('online-room-input').value.trim();
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) { el('online-error').textContent = 'Ange ett giltigt rums-ID från länken.'; return; }
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) { el('online-error').textContent = 'Enter a valid room ID from the link.'; return; }
     request('join_room', { p_room_id: id });
   };
   el('online-replace-yes').onclick = () => { el('online-replace').hidden = true; replacement?.(); replacement = null; };
   el('online-replace-no').onclick = () => { el('online-replace').hidden = true; replacement = null; };
   el('online-retry').onclick = () => run(undefined, undefined, true);
   el('online-copy').onclick = async () => {
-    try { await navigator.clipboard.writeText(el('online-link').value); el('online-copy-status').textContent = 'Länken är kopierad.'; }
-    catch { el('online-link').select(); el('online-copy-status').textContent = 'Markera länken och kopiera den manuellt.'; }
+    try { await navigator.clipboard.writeText(el('online-link').value); el('online-copy-status').textContent = 'Link copied.'; }
+    catch { el('online-link').select(); el('online-copy-status').textContent = 'Select the link and copy it manually.'; }
   };
   window.addEventListener('hashchange', route);
   window.addEventListener('online', route);
