@@ -7,6 +7,10 @@
 
 A free, open-source web implementation of Settlers of Catan with real-time multiplayer.
 
+## Requirements and design
+
+The current [PRD](PRD.md) defines staged scope, user stories, security requirements and release gates. The [HLD](docs/HLD.md) describes the proposed architecture, state charts and implementation gaps. The original PRD is archived and does not describe verified launch readiness.
+
 ## Installed PWA proof
 
 The independent [Spelhyllan PWA](https://stefanavesand.github.io/OpenCatan/hello/) contains a small local three-in-a-row game with IndexedDB recovery. It is separate from the OpenCatan game below. See [local game and iPad testing](docs/LOCAL_GAME.md).

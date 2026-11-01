@@ -142,4 +142,4 @@ Fast inriktning: PWA först, återanvänd TypeScript, utbytbara lager, hanterad 
 - Exakta rate limits, kvitto-/spelretention, kostnadsbudget, backup/RPO/RTO och driftansvar. Återstartsskydd är inte samma sak som skydd mot leverantörens dataförlust.
 - Grundspelets regelreferens/varianter, distributionens rättigheter samt produktnamn.
 
-HLD och efterföljande beslut ska länka krav-ID:n; ändrade produktkrav uppdateras här först. Historiska granskningsrapporter behåller sina datum och sin verifieringsomfattning.
+[HLD](docs/HLD.md) och efterföljande beslut ska länka krav-ID:n; ändrade produktkrav uppdateras här först. Historiska granskningsrapporter behåller sina datum och sin verifieringsomfattning.

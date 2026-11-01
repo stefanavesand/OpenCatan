@@ -15,4 +15,6 @@ Local tracking for this implementation. The repository requests the `bd` CLI in 
 
 - PWA-1 (verified): User confirmed Spelhyllan 1.1.0 game recovery on the actual iPad. Cache/update/IndexedDB recovery is also automated in Chromium. Future work includes standalone domain/session integration for OpenCatan, history, schema migrations and cross-device transport.
 
-- ONLINE-1: Verify 1.2.0 on two physical devices and separate networks, including suspend/reopen. Add room/user cleanup, abuse/rate/cost controls, identity recovery/linking, payload-bound dedup and future-schema validation. Replace duplicated SQL/TS rules before extending this backend to OpenCatan; managed transport choice remains replaceable.
+- ONLINE-1 (partly verified): User confirmed 1.2.0 online play on their devices. Separate physical networks and exact suspend/reopen scenarios remain to verify. Add room/user cleanup, abuse/rate/cost controls, identity recovery/linking, payload-bound dedup and future-schema validation. Replace duplicated SQL/TS rules before extending this backend to OpenCatan; managed transport choice remains replaceable.
+
+- DESIGN-1: Implement the PRD 3.0 / HLD 1.0 baseline incrementally in the reference game. Resolve ADR-01 (shared TypeScript authority runtime), ADR-02 (identity/invitation recovery), ADR-03 (rate limits, cost, retention and disaster recovery), ADR-04 (rules/rights). State charts and mapped test cases are target behavior, not completed implementation. See HLD implementation steps and PRD release gates.
