@@ -1,4 +1,4 @@
-const BUILD_ID = '37757f3dade9';
+const BUILD_ID = 'd79550e5c3ba';
 const offline = document.querySelector('#offline');
 const detail = document.querySelector('#detail');
 const check = document.querySelector('#check');
