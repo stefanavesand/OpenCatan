@@ -14,7 +14,9 @@ Read [inventory](MIGRATION_INVENTORY.md), [requirements draft](MVP_REQUIREMENTS.
 
 ## 1. Design before UI implementation
 
-- [ ] **P0 / UX-01 — Low-fi journey and original visual options.** Depends on the agreed product portion of REQ-01; remaining operational decisions do not block concept work. Complete D-01/02 in MVP_UI_DESIGN.md: screen flows, legal-selection/commit model, board-first tablet layouts with compact-phone adaptations, two visual directions. Product owner selects direction; no production UI rewrite yet.
+UX-01 first artifacts are available in [design/UI_CONCEPTS.md](design/UI_CONCEPTS.md): annotated low-fi journey and two iPad/phone visual directions. The user selected A — Calm Table on 2026-11-02. Initial concept work is complete; detailed design/prototype review remains pending.
+
+- [x] **P0 / UX-01 — Initial low-fi journey and original visual options.** Depends on the agreed product portion of REQ-01; remaining operational decisions do not block concept work. Complete D-01/02 in MVP_UI_DESIGN.md: screen flows, legal-selection/commit model, board-first tablet layouts with compact-phone adaptations, two visual directions. Product owner selects direction; no production UI rewrite yet.
 - [ ] **P0 / UX-02 — Hi-fi design and clickable prototype.** Depends on UX-01. Complete D-03–05: both iPad orientations and compact phone frames, realistic hands/trades, all turn phases, off-turn actions, pending/outcome-unknown, offline/429/auth/expiry/bot-failure states; accessible component specifications. Done when every required state has a design and navigable prototype path.
 - [ ] **P0 / UX-03 — iPad walkthrough and design agreement.** Depends on UX-02. Complete D-06/07 with user and second participant. Resolve blocking usability problems; record accepted design/prototype version and implementation checklist. This is the UI implementation gate. Technical isolation can proceed independently once its scope/rights are understood.
 

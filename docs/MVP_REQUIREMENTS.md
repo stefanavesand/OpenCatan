@@ -42,7 +42,7 @@ Full offline Catan, LAN/Bluetooth/WebRTC/native packaging; one-human/two-bot or 
 | Rules/map | Base game, ten VP, fixed beginner board, no timer; document the specific rules reference and edge cases | Product rules agreed; reference to record |
 | Entry/identity | Persistent anonymous principals, first valid invited guest claims slot, no host confirmation or account requirement; disclose loss after storage deletion | Agreed |
 | Reference games | Keep existing data; move Hello world, tic-tac-toe and local setup to experiments; prioritize Catan/resume | Agreed |
-| Naming/visual style | Original readable tabletop-inspired SVG design, distinct from commercial assets; working name Game Shelf | Proposed; design review needed |
+| Naming/visual style | A — Calm Table selected: warm light surfaces, pine-green primary action, original tabletop-inspired visuals; working name Game Shelf | Direction agreed; detailed design/name/asset review still needed |
 | Expiry, budget and operation | Start from explicit pilot limits; choose retention/deletion period, monthly runtime cap and operational owner | Open |
 | Requirements/design agreement | Product baseline agreed; operational acceptance details and hi-fi prototype still need review | Partly agreed; visual design pending |
 

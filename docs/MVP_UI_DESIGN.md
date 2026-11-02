@@ -1,6 +1,6 @@
 # MVP UI design brief and review plan
 
-Version 0.2 · 2026-11-02. This is a **design brief and screen/state inventory**, not an approved visual design or a completed prototype. Scope: [private MVP requirements](MVP_REQUIREMENTS.md), two humans plus one bot on iPad, with future phone support designed in from the start. The product baseline is agreed; visual design is still pending. Do not implement a large UI rewrite before requirements and the resulting design are agreed.
+Version 0.3 · 2026-11-02. This is a **design brief and screen/state inventory**, not an approved visual design or a completed prototype. Scope: [private MVP requirements](MVP_REQUIREMENTS.md), two humans plus one bot on iPad, with future phone support designed in from the start. The product baseline is agreed. A — Calm Table is the selected visual direction; detailed design and prototype review remain pending. Do not implement a large UI rewrite before requirements and the resulting design are agreed.
 
 ## Design goals
 
@@ -36,8 +36,10 @@ Connection state and game state are orthogonal. A disabled action must have a vi
 
 ## Required deliverables before UI implementation
 
-- [ ] D-01: Annotated low-fi journey for all screens above, including the off-turn/unknown-outcome branches; link each to M-01–16.
-- [ ] D-02: Two original visual directions with one real board/hand/action screen each and a compact-phone adaptation; select a direction with the product owner.
+First review artifacts: [visual concepts and annotated low-fi journey](design/UI_CONCEPTS.md). Two iPad/phone directions are available. The user selected A — Calm Table on 2026-11-02; this does not imply final design/prototype approval.
+
+- [x] D-01: Initial annotated low-fi journey drafted in design/UI_CONCEPTS.md, including off-turn/unknown-outcome branches and M-01–16 mapping. Detailed interaction validation remains part of prototype review.
+- [x] D-02: Two board/hand/action visual directions with compact-phone adaptations produced. Product owner selected A — Calm Table; these are generated concept images, not implemented screens.
 - [ ] D-03: Hi-fi iPad portrait/landscape and compact phone designs for lobby, setup, active game, trade and results, plus recovery states. Use realistic resource/card quantities and long player names.
 - [ ] D-04: Component/state specification: terrain/pieces, player labels, hand/card UI, action/confirmation controls, legal targets, sheets, alerts, focus, spacing, typography, contrast and motion/reduced motion.
 - [ ] D-05: Clickable prototype covering create/invite/join, both setup rounds, ordinary turn/build, a trade, discard/robber, development card, disconnect/reconnect and victory. Include asynchronous waiting and failure, not only the happy path.
