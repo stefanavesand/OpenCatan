@@ -6,7 +6,7 @@ let ready = false;
 let pending = null;
 const el = id => document.getElementById(id);
 function route() {
-  const name = location.hash === '#catan' ? 'catan' : location.hash.startsWith('#online') ? 'online' : ['#tic-tac-toe', '#tre-i-rad'].includes(location.hash) ? 'game' : location.hash === '#hello' ? 'hello' : 'library';
+  const name = location.hash.startsWith('#catan-online') ? 'catan-online' : location.hash === '#catan' ? 'catan' : location.hash.startsWith('#online') ? 'online' : ['#tic-tac-toe', '#tre-i-rad'].includes(location.hash) ? 'game' : location.hash === '#hello' ? 'hello' : 'library';
   for (const section of document.querySelectorAll('[data-view]')) section.hidden = section.dataset.view !== name;
   document.title = name === 'game' ? 'Tic-tac-toe · Game Shelf' : name === 'hello' ? 'Hello iPad' : 'Game Shelf';
   el('app-home').setAttribute('aria-current', name === 'library' ? 'page' : 'false');

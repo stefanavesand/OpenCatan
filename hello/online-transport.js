@@ -39,9 +39,10 @@ async function http(path, body, token) {
     throw new OnlineError('Cannot reach the game service. Connect to the internet and try again.', 'NETWORK_UNAVAILABLE', true);
   } finally { clearTimeout(timer); }
 }
-async function identity() {
+export async function identity({ allowCreate = true } = {}) {
   return locked('spelhyllan-online-auth', async () => {
     const saved = read(AUTH);
+    if (!saved && !allowCreate) throw new OnlineError('The saved player identity is missing. It has not been replaced. Return with the original browser or start a separate new game.', 'AUTH_REQUIRED');
     if (saved?.access_token && saved?.user?.id && saved.expires_at > Date.now() / 1000 + 60) return saved;
     // Never replace an existing identity on auth/network errors: that would lose room access.
     const session = saved ? await http('/auth/v1/token?grant_type=refresh_token', { refresh_token: saved.refresh_token }) : await http('/auth/v1/signup', { data: {} });
