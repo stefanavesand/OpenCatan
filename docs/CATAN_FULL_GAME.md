@@ -2,6 +2,8 @@
 
 This release targets two people on separate devices and one managed bot, from initial placement to a natural 10-point victory. Existing local setup and tic-tac-toe remain separate modes. Internet Catan requires connectivity; cached UI is not a promise of offline multiplayer.
 
+Published 2026-11-02: PWA **1.4.0**, build **5c47df960c8b**, static commit `e1a668154270ade59ac4014475a0143f02f803f3`. GitHub Pages deployment succeeded and all twenty public files (including the service worker) matched their local SHA-256 hashes. The final deterministic browser rerun passed 21 tests; the two opt-in service tests were skipped in that rerun, with the full Catan live pass recorded below. Open [Catan online](https://stefanavesand.github.io/OpenCatan/hello/#catan-online), install the update, create a room and share the invitation with the second human device. A bot is added automatically.
+
 ## Architecture
 
 `src/game/session/catan.ts` wraps the existing pure base-game transitions and setup validator. It owns versioned snapshots, seat membership, setup progression, bounded public history and two-party player trades. It has no network, storage or UI calls. Entropy/time/IDs are injected by its authority adapter. The fixed beginner board is intentional for this pilot.
