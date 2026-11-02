@@ -1,12 +1,16 @@
 # MVP UI design brief and review plan
 
-Version 0.1 · 2026-11-02. This is a **design brief and screen/state inventory**, not an approved visual design or a completed prototype. Scope: [private MVP requirements](MVP_REQUIREMENTS.md), two humans plus one bot on iPad. Do not implement a large UI rewrite before requirements and the resulting design are agreed.
+Version 0.2 · 2026-11-02. This is a **design brief and screen/state inventory**, not an approved visual design or a completed prototype. Scope: [private MVP requirements](MVP_REQUIREMENTS.md), two humans plus one bot on iPad, with future phone support designed in from the start. The product baseline is agreed; visual design is still pending. Do not implement a large UI rewrite before requirements and the resulting design are agreed.
 
 ## Design goals
 
 Make the board the main workspace. Move room creation/invitation controls out of the active game's primary area. Keep the current phase, acting player, own hand and primary action accessible. Present player trades, card effects and discards as deliberate, understandable decisions with a visible commit boundary. Keep diagnostics and transport details out of normal gameplay.
 
 Use original graphics, text and iconography with documented rights. Terrain/resource type and player identity must remain distinguishable without color alone. English copy, readable text, clear focus, 44 CSS px touch targets, contrast and VoiceOver labels are part of the design deliverable.
+
+## Responsive phone direction
+
+Include compact phone frames around 360×800 and 390×844 CSS px alongside iPad designs. These are design samples, not a declared device-support matrix. Reflow the hand/actions into accessible trays or sheets; specify readable board overview, deliberate pan/zoom and selection behavior if needed, and safe-area/virtual-keyboard handling. Keep the primary turn action reachable and avoid whole-page horizontal overflow. Preserve 44 CSS px touch targets instead of proportionally shrinking all controls. UI layout must not change game rules, player privacy or session semantics. Phone design review is required now; physical iPhone/Android browser and install acceptance is a later release gate.
 
 ## Primary journey and screens
 
@@ -32,9 +36,9 @@ Connection state and game state are orthogonal. A disabled action must have a vi
 
 ## Required deliverables before UI implementation
 
-- [ ] D-01: Annotated low-fi journey for all screens above, including the off-turn/unknown-outcome branches; link each to M-01–15.
-- [ ] D-02: Two original visual directions with one real board/hand/action screen each; select a direction with the product owner.
-- [ ] D-03: Hi-fi portrait and landscape designs for lobby, setup, active game, trade and results, plus recovery states. Use realistic resource/card quantities and long player names.
+- [ ] D-01: Annotated low-fi journey for all screens above, including the off-turn/unknown-outcome branches; link each to M-01–16.
+- [ ] D-02: Two original visual directions with one real board/hand/action screen each and a compact-phone adaptation; select a direction with the product owner.
+- [ ] D-03: Hi-fi iPad portrait/landscape and compact phone designs for lobby, setup, active game, trade and results, plus recovery states. Use realistic resource/card quantities and long player names.
 - [ ] D-04: Component/state specification: terrain/pieces, player labels, hand/card UI, action/confirmation controls, legal targets, sheets, alerts, focus, spacing, typography, contrast and motion/reduced motion.
 - [ ] D-05: Clickable prototype covering create/invite/join, both setup rounds, ordinary turn/build, a trade, discard/robber, development card, disconnect/reconnect and victory. Include asynchronous waiting and failure, not only the happy path.
 - [ ] D-06: Walk through the prototype on iPad with the user and a second participant. Record whether each can understand who acts, what is legal, what is secret and what is committed. Fix blocking confusion before design agreement.

@@ -1,8 +1,8 @@
 # Game Shelf / OpenCatan — Product Requirements Document
 
-Version 3.3 · 2026-11-02 · Roadmap baseline with a confirmed narrow private-MVP scope; detailed MVP acceptance and design remain under review.
+Version 3.4 · 2026-11-02 · Roadmap baseline with a confirmed narrow private-MVP scope; product decisions agreed, mobile-ready design required, operational acceptance and visual design still under review.
 
-This PRD supersedes the [original PRD](docs/archive/PRD-2025-12-29.md). Its game ideas remain available as history; claims of feature completeness, asset licensing, host migration and all expansions at launch are not verified commitments. This document takes precedence for future work. The document version is independent of the app version. Version 3.1 translated the baseline into English. Version 3.2 added staged bot requirements; version 3.3 records the confirmed private MVP scope and links its decision drafts. Existing requirement IDs remain stable.
+This PRD supersedes the [original PRD](docs/archive/PRD-2025-12-29.md). Its game ideas remain available as history; claims of feature completeness, asset licensing, host migration and all expansions at launch are not verified commitments. This document takes precedence for future work. The document version is independent of the app version. Version 3.1 translated the baseline into English. Version 3.2 added staged bot requirements; version 3.3 recorded the confirmed private MVP scope and its decision drafts; version 3.4 records the agreed product baseline and later phone-support design requirement. Existing requirement IDs remain stable.
 
 ## 1. Goals and audience
 
@@ -16,7 +16,7 @@ The app and all maintained repository content must be in English. Conversation w
 
 ## 2. Stages and scope
 
-Private MVP scope confirmed by the user on 2026-11-02: **two humans plus one bot, internet play, iPad PWA, private invitations**. The broader E2/B1–B3 capabilities below remain roadmap stages; not all are mandatory for this first MVP. [MVP requirements](docs/MVP_REQUIREMENTS.md) propose the detailed acceptance contract and open decisions; [UI design brief](docs/MVP_UI_DESIGN.md) defines the design work still required. Only the narrow scope is agreed so far. [Inventory](docs/MIGRATION_INVENTORY.md) and [migration/release todo](docs/MIGRATION_MVP_TODO.md) describe the independent-repository transition; no live migration has occurred.
+Private MVP scope confirmed by the user on 2026-11-02: **two humans plus one bot, internet play, iPad PWA, private invitations**. The broader E2/B1–B3 capabilities below remain roadmap stages; not all are mandatory for this first MVP. [MVP requirements](docs/MVP_REQUIREMENTS.md) propose the detailed acceptance contract and open decisions; [UI design brief](docs/MVP_UI_DESIGN.md) defines the design work still required. The user also agreed the detailed product baseline on 2026-11-02: both iPad orientations, fixed beginner board/ten VP/no timer, first invited guest admission, persistent anonymous identity with no storage-loss recovery, Easy/Standard at creation, Catan/resume primary with experiments separate, and save/reconnect after every accepted action. Design responsive phone layouts now for later mobile support; phone certification and native packaging remain later gates. Operational choices and visual design are not yet agreed. [Inventory](docs/MIGRATION_INVENTORY.md) and [migration/release todo](docs/MIGRATION_MVP_TODO.md) describe the independent-repository transition; no live migration has occurred.
 
 | Stage | Deliverable and gate |
 |---|---|

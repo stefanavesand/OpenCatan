@@ -319,3 +319,7 @@ PWA 1.2.1 implements a first pure client policy for connection/command outcomes,
 ### Implementation note: full Catan internet pilot
 
 [CATAN_FULL_GAME.md](CATAN_FULL_GAME.md) records the next implementation slice: the same bundled TypeScript session/decision engine runs in the PWA test harness and managed authority; server-only snapshots/receipts, authorized choices and two-human/one-bot rooms replace duplicated online rules for this Catan flow. The managed adapter currently uses a TanStack HTTP route with Supabase rather than a Supabase Edge Function. Review artifacts and their deployment limitations are in [backend/catan](../backend/catan/README.md). This establishes an executed ADR-01 direction; it does not close E1/E2, identity recovery, operational or device gates. The separate legacy tic-tac-toe backend remains unchanged.
+
+### Responsive design direction (2026-11-02)
+
+The MVP product baseline is agreed in [MVP_REQUIREMENTS.md](MVP_REQUIREMENTS.md). iPad portrait/landscape is the first release target; compact phone layouts must be designed now for later mobile support. Keep viewport, safe areas, board navigation and hand/action presentation inside the UI boundary. Shared rules, private projections, session recovery and transport contracts must remain independent of screen size. Full phone/device certification and Capacitor packaging retain their separate later gates. Visual design and operational acceptance details remain under review.
