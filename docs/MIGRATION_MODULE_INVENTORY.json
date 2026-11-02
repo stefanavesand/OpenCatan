@@ -1,0 +1,171 @@
+{
+  "date": "2026-11-02",
+  "sourceCommit": "34a26ea27dd05f392362ceba540a71dc441cc069",
+  "upstreamBaseline": "97786b131a4af8eae8aada53578bfca9b1789982",
+  "method": "Vite 7 library build, write:false, configFile:false, publicDir:false, minify:false; Rollup chunk.modules. Type closure from TypeScript createProgram using tsconfig.app.json and the same two entrypoints. No remote upstream refresh in this inventory. Added files may still contain adaptations; provenance is not a legal ownership claim.",
+  "runtime": {
+    "setup": [
+      {
+        "path": "src/game/engine/setupSession.ts",
+        "renderedLength": 6143,
+        "originalLength": 7472,
+        "provenance": "added-in-project-history"
+      },
+      {
+        "path": "src/game/engine/setupValidation.ts",
+        "renderedLength": 1308,
+        "originalLength": 1970,
+        "provenance": "added-in-project-history"
+      },
+      {
+        "path": "src/utils/boardGenerator.ts",
+        "renderedLength": 1515,
+        "originalLength": 18092,
+        "provenance": "upstream-unchanged"
+      },
+      {
+        "path": "src/utils/hex.ts",
+        "renderedLength": 2845,
+        "originalLength": 16358,
+        "provenance": "upstream-modified"
+      },
+      {
+        "path": "src/utils/hexMath.ts",
+        "renderedLength": 534,
+        "originalLength": 21500,
+        "provenance": "upstream-unchanged"
+      }
+    ],
+    "full": [
+      {
+        "path": "src/game/engine/base/board.ts",
+        "renderedLength": 2619,
+        "originalLength": 3311,
+        "provenance": "added-in-project-history"
+      },
+      {
+        "path": "src/game/engine/base/economy.ts",
+        "renderedLength": 9205,
+        "originalLength": 10715,
+        "provenance": "added-in-project-history"
+      },
+      {
+        "path": "src/game/engine/base/scoring.ts",
+        "renderedLength": 2216,
+        "originalLength": 2781,
+        "provenance": "added-in-project-history"
+      },
+      {
+        "path": "src/game/engine/base/turn.ts",
+        "renderedLength": 6874,
+        "originalLength": 7718,
+        "provenance": "added-in-project-history"
+      },
+      {
+        "path": "src/game/engine/setupValidation.ts",
+        "renderedLength": 1308,
+        "originalLength": 1970,
+        "provenance": "added-in-project-history"
+      },
+      {
+        "path": "src/game/session/bot.ts",
+        "renderedLength": 6666,
+        "originalLength": 7738,
+        "provenance": "added-in-project-history"
+      },
+      {
+        "path": "src/game/session/catan.ts",
+        "renderedLength": 13821,
+        "originalLength": 16356,
+        "provenance": "added-in-project-history"
+      },
+      {
+        "path": "src/game/session/index.ts",
+        "renderedLength": 0,
+        "originalLength": 103,
+        "provenance": "added-in-project-history"
+      },
+      {
+        "path": "src/session/projectView.ts",
+        "renderedLength": 2241,
+        "originalLength": 2349,
+        "provenance": "added-in-project-history"
+      },
+      {
+        "path": "src/types/cards.ts",
+        "renderedLength": 206,
+        "originalLength": 8981,
+        "provenance": "upstream-unchanged"
+      },
+      {
+        "path": "src/types/player.ts",
+        "renderedLength": 586,
+        "originalLength": 6115,
+        "provenance": "upstream-modified"
+      },
+      {
+        "path": "src/utils/boardGenerator.ts",
+        "renderedLength": 1223,
+        "originalLength": 18092,
+        "provenance": "upstream-unchanged"
+      },
+      {
+        "path": "src/utils/hex.ts",
+        "renderedLength": 3104,
+        "originalLength": 16358,
+        "provenance": "upstream-modified"
+      },
+      {
+        "path": "src/utils/hexMath.ts",
+        "renderedLength": 555,
+        "originalLength": 21500,
+        "provenance": "upstream-unchanged"
+      }
+    ]
+  },
+  "typecheckSourceClosure": [
+    "src/game/engine/base/board.ts",
+    "src/game/engine/base/economy.ts",
+    "src/game/engine/base/scoring.ts",
+    "src/game/engine/base/turn.ts",
+    "src/game/engine/setupSession.ts",
+    "src/game/engine/setupValidation.ts",
+    "src/game/session/bot.ts",
+    "src/game/session/catan.ts",
+    "src/game/session/index.ts",
+    "src/game/state/slices/boardSlice.ts",
+    "src/game/state/slices/gameSlice.ts",
+    "src/game/state/slices/lobbySlice.ts",
+    "src/game/state/slices/logSlice.ts",
+    "src/game/state/slices/playersSlice.ts",
+    "src/game/state/slices/statsSlice.ts",
+    "src/game/state/slices/tradeSlice.ts",
+    "src/game/state/slices/uiSlice.ts",
+    "src/game/state/store.ts",
+    "src/network/constants.ts",
+    "src/network/host.ts",
+    "src/network/hostManager.ts",
+    "src/network/messages.ts",
+    "src/network/networkMiddleware.ts",
+    "src/network/partyClient.ts",
+    "src/network/peerManager.ts",
+    "src/network/session.ts",
+    "src/network/sessionTransport.ts",
+    "src/session/hostSession.ts",
+    "src/session/projectView.ts",
+    "src/session/protocol.ts",
+    "src/session/transport.ts",
+    "src/types/board.ts",
+    "src/types/cards.ts",
+    "src/types/common.ts",
+    "src/types/coordinates.ts",
+    "src/types/game.ts",
+    "src/types/index.ts",
+    "src/types/lobby.ts",
+    "src/types/network.ts",
+    "src/types/player.ts",
+    "src/utils/boardGenerator.ts",
+    "src/utils/hex.ts",
+    "src/utils/hexMath.ts"
+  ]
+}

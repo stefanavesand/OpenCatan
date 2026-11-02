@@ -1,8 +1,8 @@
 # Game Shelf / OpenCatan — Product Requirements Document
 
-Version 3.2 · 2026-11-01 · Requirements baseline for the next stage, not a claim of launch readiness.
+Version 3.3 · 2026-11-02 · Roadmap baseline with a confirmed narrow private-MVP scope; detailed MVP acceptance and design remain under review.
 
-This PRD supersedes the [original PRD](docs/archive/PRD-2025-12-29.md). Its game ideas remain available as history; claims of feature completeness, asset licensing, host migration and all expansions at launch are not verified commitments. This document takes precedence for future work. The document version is independent of the app version. Version 3.1 translated the baseline into English. Version 3.2 adds staged bot requirements; existing requirement IDs remain stable.
+This PRD supersedes the [original PRD](docs/archive/PRD-2025-12-29.md). Its game ideas remain available as history; claims of feature completeness, asset licensing, host migration and all expansions at launch are not verified commitments. This document takes precedence for future work. The document version is independent of the app version. Version 3.1 translated the baseline into English. Version 3.2 added staged bot requirements; version 3.3 records the confirmed private MVP scope and links its decision drafts. Existing requirement IDs remain stable.
 
 ## 1. Goals and audience
 
@@ -15,6 +15,8 @@ Local games must work without internet or an authentication server. Internet gam
 The app and all maintained repository content must be in English. Conversation with the user may be in Swedish. Language changes must preserve installation identity, saved games, player identities and compatibility with existing links.
 
 ## 2. Stages and scope
+
+Private MVP scope confirmed by the user on 2026-11-02: **two humans plus one bot, internet play, iPad PWA, private invitations**. The broader E2/B1–B3 capabilities below remain roadmap stages; not all are mandatory for this first MVP. [MVP requirements](docs/MVP_REQUIREMENTS.md) propose the detailed acceptance contract and open decisions; [UI design brief](docs/MVP_UI_DESIGN.md) defines the design work still required. Only the narrow scope is agreed so far. [Inventory](docs/MIGRATION_INVENTORY.md) and [migration/release todo](docs/MIGRATION_MVP_TODO.md) describe the independent-repository transition; no live migration has occurred.
 
 | Stage | Deliverable and gate |
 |---|---|
